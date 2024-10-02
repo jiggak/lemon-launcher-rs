@@ -26,7 +26,7 @@ fn main() -> Result<()> {
         .show_cursor(false);
 
     let config = MenuConfig::load_config("./games.toml")?;
-    let menu = LemonMenu::new(config);
+    let mut menu = LemonMenu::new(config);
     let mut app = LemonLauncher::new(font, window)?;
 
     let mut event_pump = sdl_context.event_pump()
@@ -34,7 +34,7 @@ fn main() -> Result<()> {
 
     loop {
         let event = event_pump.wait_event();
-        if app.handle_event(&event) {
+        if app.handle_event(&event, &mut menu) {
             break;
         }
 

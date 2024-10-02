@@ -1,6 +1,6 @@
 use anyhow::Result;
 use sdl2::{
-    event::Event, pixels::Color, rect::{Point, Rect}, render::{TextureQuery, WindowCanvas}, ttf::Font, video::Window
+    event::Event, keyboard::Keycode, pixels::Color, rect::{Point, Rect}, render::{TextureQuery, WindowCanvas}, ttf::Font, video::Window
 };
 
 use crate::lemon_menu::LemonMenu;
@@ -21,24 +21,24 @@ impl<'a, 'b> LemonLauncher<'a, 'b> {
         })
     }
 
-    pub fn handle_event(&self, event: &Event) -> bool {
+    pub fn handle_event(&self, event: &Event, menu: &mut LemonMenu) -> bool {
         match event {
             Event::Quit { .. } => true,
-            // Event::KeyDown { keycode: Some(keycode), .. } => {
-            //     match keycode {
-            //         Keycode::W => context.move_up(),
-            //         Keycode::A => context.move_left(),
-            //         Keycode::S => context.move_down(),
-            //         Keycode::D => context.move_right(),
-            //         Keycode::Escape => context.toggle_pause(),
-            //         _ => false
-            //     }
-            // }
+            Event::KeyDown { keycode: Some(keycode), .. } => {
+                match *keycode {
+                    Keycode::Up => menu.move_cursor(-1),
+                    Keycode::Down => menu.move_cursor(1),
+                    Keycode::Space => menu.activate(),
+                    Keycode::Backspace => menu.back(),
+                    _ => ()
+                }
+                false
+            }
             _ => false
         }
     }
 
-    pub fn draw(&mut self, menu:&LemonMenu) -> Result<()> {
+    pub fn draw(&mut self, menu: &LemonMenu) -> Result<()> {
         self.draw_background();
         // self.draw_text("Hello, World!", Point::new(50, 50))?;
         self.draw_menu(menu, Rect::new(40, 40, 560, 400), 40)?;
@@ -53,11 +53,11 @@ impl<'a, 'b> LemonLauncher<'a, 'b> {
         self.canvas.clear();
     }
 
-    fn draw_text<S: Into<String>>(&mut self, text: S, point: Point) -> Result<()> {
+    fn draw_text<S: Into<String>>(&mut self, text: S, color: Color, point: Point) -> Result<()> {
         let texture_creator = self.canvas.texture_creator();
 
         let font_surface = self.font.render(&text.into())
-            .solid(Color::MAGENTA)?;
+            .solid(color)?;
         let font_texture = texture_creator
             .create_texture_from_surface(&font_surface)?;
 
@@ -75,8 +75,12 @@ impl<'a, 'b> LemonLauncher<'a, 'b> {
 
         // let rows = region.height() / line_height as u32;
 
-        for menu in menu.iter() {
-            self.draw_text(menu.get_title(), point)?;
+        for entry in menu.iter() {
+            let color = match menu.is_selected(entry) {
+                true => Color::MAGENTA,
+                false => Color::BLACK
+            };
+            self.draw_text(&entry.title, color, point)?;
             point.y += line_height;
         }
 

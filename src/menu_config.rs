@@ -1,12 +1,11 @@
 use anyhow::Result;
 use serde::Deserialize;
-use std::fs;
-
-use crate::lemon_menu::MenuItem;
+use std::{collections::HashMap, fs};
 
 #[derive(Deserialize)]
 pub struct MenuConfig {
-    pub menu:Vec<Menu>
+    pub main:Menu,
+    pub menus:HashMap<String, Menu>
 }
 
 impl MenuConfig {
@@ -20,22 +19,13 @@ impl MenuConfig {
 
 #[derive(Deserialize, Clone)]
 pub struct Menu {
-    pub name:String,
     pub entries:Vec<MenuEntry>
 }
 
-impl MenuItem for Menu {
-    fn get_title(&self) -> &String {
-        &self.name
-    }
-
-    fn activate(&self) {
-    }
-}
-
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, PartialEq)]
 pub struct MenuEntry {
     pub title:String,
     pub rom:Option<String>,
-    pub exec:Option<String>
+    pub exec:Option<String>,
+    pub menu:Option<String>
 }

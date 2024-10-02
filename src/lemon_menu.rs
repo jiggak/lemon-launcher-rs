@@ -1,60 +1,46 @@
-use std::slice::Iter;
-
-use anyhow::Result;
-
-use crate::menu_config::{Menu, MenuConfig};
+use crate::menu_config::{Menu, MenuConfig, MenuEntry};
 
 pub struct LemonMenu {
     config: MenuConfig,
-    items: Vec<Box<dyn MenuItem>>
+    menu: Menu,
+    index: usize
 }
 
 impl LemonMenu {
     pub fn new(config: MenuConfig) -> Self {
-        let items = config.menu.iter()
-            .map(|m| Box::new(m.clone()) as Box<dyn MenuItem>)
-            .collect();
-
+        let menu = config.main.clone();
         LemonMenu {
             config,
-            items
+            menu,
+            index: 0
         }
     }
 
-    pub fn select(&self) {
+    pub fn is_selected(&self, entry: &MenuEntry) -> bool {
+        &self.menu.entries[self.index] == entry
+    }
+
+    pub fn activate(&mut self) {
+        let entry = &self.menu.entries[self.index];
+        if let Some(menu_id) = &entry.menu {
+            self.menu = self.config.menus[menu_id].clone();
+            self.index = 0;
+        }
     }
 
     pub fn back(&mut self) {
-
+        self.menu = self.config.main.clone();
+        self.index = 0;
     }
 
-    pub fn cursor_next(&self, inc: i32) {
-        println!("cursor_next {inc}")
+    pub fn move_cursor(&mut self, inc: i32) {
+        let new_index = self.index as i32 + inc;
+        if new_index >= 0 && new_index < self.menu.entries.len() as i32 {
+            self.index = new_index as usize;
+        }
     }
 
-    pub fn cursor_prev(&self, inc: i32) {
-        println!("cursor_prev {inc}")
+    pub fn iter(&self) -> impl Iterator<Item = &MenuEntry> {
+        self.menu.entries.iter()
     }
-
-    pub fn iter(&self) -> impl Iterator<Item = &Box<dyn MenuItem>> {
-        self.items.iter()
-    }
-}
-
-struct MenuIterator {
-    iter: dyn Iterator<Item = Menu>
-}
-
-impl Iterator for MenuIterator {
-    type Item = Box<dyn MenuItem>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        None
-    }
-}
-
-pub trait MenuItem {
-    fn get_title(&self) -> &String;
-
-    fn activate(&self);
 }
