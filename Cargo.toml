@@ -1,0 +1,10 @@
+[package]
+name = "lemon-launcher-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.89"
+sdl2 = { version = "0.37.0", features = ["image", "ttf"] }
+serde = { version = "1.0.210", features = ["derive"] }
+toml = "0.8.19"
