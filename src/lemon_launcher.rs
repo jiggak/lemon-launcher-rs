@@ -1,6 +1,6 @@
-use anyhow::Result;
+use anyhow::{Error, Result};
 use sdl2::{
-    event::Event, keyboard::Keycode, pixels::Color, rect::{Point, Rect}, render::{TextureQuery, WindowCanvas}, ttf::Font, video::Window
+    event::Event, keyboard::Keycode, pixels::Color, rect::Rect, render::{TextureQuery, WindowCanvas}, ttf::Font, video::Window
 };
 
 use crate::lemon_menu::LemonMenu;
@@ -53,25 +53,29 @@ impl<'a, 'b> LemonLauncher<'a, 'b> {
         self.canvas.clear();
     }
 
-    fn draw_text<S: Into<String>>(&mut self, text: S, color: Color, point: Point) -> Result<()> {
+    fn draw_text<S: Into<String>>(&mut self, text: S, color: Color, dest: Rect, justify: Justify) -> Result<()> {
         let texture_creator = self.canvas.texture_creator();
 
         let font_surface = self.font.render(&text.into())
-            .solid(color)?;
+            .blended(color)?;
         let font_texture = texture_creator
             .create_texture_from_surface(&font_surface)?;
 
         let TextureQuery { width, height, .. } = font_texture.query();
 
-        let font_target = Rect::new(point.x, point.y, width, height);
+        let mut font_rect = Rect::new(dest.x, dest.y, width, height);
+        match justify {
+            Justify::Center => font_rect.center_on(dest.center()),
+            Justify::Right => font_rect.offset((dest.width() - width) as i32, 0),
+            _ => ()
+        };
 
-        self.canvas.copy(&font_texture, None, Some(font_target)).unwrap();
-
-        Ok(())
+        self.canvas.copy(&font_texture, None, Some(font_rect))
+            .map_err(|e| Error::msg(e))
     }
 
-    fn draw_menu(&mut self, menu: &LemonMenu, region: Rect, line_height: i32) -> Result<()> {
-        let mut point = region.top_left();
+    fn draw_menu(&mut self, menu: &LemonMenu, region: Rect, line_height: u32) -> Result<()> {
+        let mut dest = Rect::new(region.x, region.y, region.width(), line_height);
 
         // let rows = region.height() / line_height as u32;
 
@@ -80,10 +84,17 @@ impl<'a, 'b> LemonLauncher<'a, 'b> {
                 true => Color::MAGENTA,
                 false => Color::BLACK
             };
-            self.draw_text(&entry.title, color, point)?;
-            point.y += line_height;
+
+            self.draw_text(&entry.title, color, dest, Justify::Center)?;
+            dest = dest.bottom_shifted(line_height as i32);
         }
 
         Ok(())
     }
+}
+
+pub enum Justify {
+    Left,
+    Center,
+    Right
 }
