@@ -1,4 +1,4 @@
-use crate::menu_config::{Menu, MenuConfig, MenuEntry};
+use crate::menu_config::{Menu, MenuConfig, MenuEntry, MenuEntryAction};
 
 pub struct LemonMenu {
     config: MenuConfig,
@@ -21,11 +21,16 @@ impl LemonMenu {
     }
 
     pub fn activate(&mut self) {
-        let entry = &self.menu.entries[self.index];
-        if let Some(menu_id) = &entry.menu {
-            self.menu = self.config.menus[menu_id].clone();
-            self.index = 0;
+        let entry = self.menu.entries[self.index].action.clone();
+        match entry {
+            MenuEntryAction::MenuAction { menu } => self.open_menu(&menu),
+            _ => ()
         }
+    }
+
+    fn open_menu(&mut self, menu_id:&String) {
+        self.menu = self.config.menus[menu_id].clone();
+        self.index = 0;
     }
 
     pub fn back(&mut self) {

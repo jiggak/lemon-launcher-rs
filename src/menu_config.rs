@@ -4,8 +4,8 @@ use std::{collections::HashMap, fs};
 
 #[derive(Deserialize)]
 pub struct MenuConfig {
-    pub main:Menu,
-    pub menus:HashMap<String, Menu>
+    pub main: Menu,
+    pub menus: HashMap<String, Menu>
 }
 
 impl MenuConfig {
@@ -19,13 +19,26 @@ impl MenuConfig {
 
 #[derive(Deserialize, Clone)]
 pub struct Menu {
-    pub entries:Vec<MenuEntry>
+    pub entries: Vec<MenuEntry>
 }
 
 #[derive(Deserialize, Clone, PartialEq)]
 pub struct MenuEntry {
-    pub title:String,
-    pub rom:Option<String>,
-    pub exec:Option<String>,
-    pub menu:Option<String>
+    pub title: String,
+    pub action: MenuEntryAction
+}
+
+#[derive(Deserialize, Clone, PartialEq)]
+#[serde(untagged)]
+pub enum MenuEntryAction {
+    MenuAction {
+        menu: String
+    },
+    ExecAction {
+        exec: String
+    },
+    RomAction {
+        rom: String,
+        params: Option<String>
+    }
 }
