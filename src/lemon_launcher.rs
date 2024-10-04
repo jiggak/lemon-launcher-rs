@@ -75,18 +75,37 @@ impl<'a, 'b> LemonLauncher<'a, 'b> {
     }
 
     fn draw_menu(&mut self, menu: &LemonMenu, region: Rect, line_height: u32) -> Result<()> {
-        let mut dest = Rect::new(region.x, region.y, region.width(), line_height);
+        let rows = region.height() / line_height;
+        let top_rows = rows / 2;
+        let bottom_rows = rows - top_rows;
 
-        // let rows = region.height() / line_height as u32;
+        let mut row_rect = Rect::new(
+            region.x,
+            region.y + (top_rows * line_height) as i32,
+            region.width(),
+            line_height
+        );
 
-        for entry in menu.iter() {
+        for entry in menu.iter_fwd().take(bottom_rows as usize) {
             let color = match menu.is_selected(entry) {
                 true => Color::MAGENTA,
                 false => Color::BLACK
             };
 
-            self.draw_text(&entry.title, color, dest, Justify::Center)?;
-            dest = dest.bottom_shifted(line_height as i32);
+            self.draw_text(&entry.title, color, row_rect, Justify::Center)?;
+            row_rect = row_rect.bottom_shifted(line_height as i32);
+        }
+
+        let mut row_rect = Rect::new(
+            region.x,
+            region.y + ((top_rows - 1) * line_height) as i32,
+            region.width(),
+            line_height
+        );
+
+        for entry in menu.iter_rev().take(top_rows as usize) {
+            self.draw_text(&entry.title, Color::BLACK, row_rect, Justify::Center)?;
+            row_rect = row_rect.top_shifted(line_height as i32);
         }
 
         Ok(())

@@ -45,7 +45,14 @@ impl LemonMenu {
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &MenuEntry> {
+    pub fn iter_fwd(&self) -> impl DoubleEndedIterator<Item = &MenuEntry> {
         self.menu.entries.iter()
+            .skip(self.index)
+    }
+
+    pub fn iter_rev(&self) -> impl DoubleEndedIterator<Item = &MenuEntry> {
+        self.menu.entries.iter()
+            .take(self.index)
+            .rev()
     }
 }
