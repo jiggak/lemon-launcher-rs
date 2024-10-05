@@ -1,11 +1,15 @@
+mod lemon_config;
 mod lemon_menu;
 mod lemon_launcher;
 mod menu_config;
+mod renderer;
 
 use anyhow::{Error, Result};
+use lemon_config::LemonConfig;
 use lemon_launcher::LemonLauncher;
 use lemon_menu::LemonMenu;
 use menu_config::MenuConfig;
+use renderer::Renderer;
 
 fn main() -> Result<()> {
     let sdl_context = sdl2::init()
@@ -25,20 +29,23 @@ fn main() -> Result<()> {
     sdl_context.mouse()
         .show_cursor(false);
 
-    let config = MenuConfig::load_config("./games.toml")?;
-    let mut menu = LemonMenu::new(config);
-    let mut app = LemonLauncher::new(font, window)?;
+    let mut renderer = Renderer::new(font, window)?;
+
+    let config = LemonConfig::load_config("./lemon-launcher.toml")?;
+    let menu_config = MenuConfig::load_config("./games.toml")?;
+    let menu = LemonMenu::new(menu_config);
+    let mut app = LemonLauncher::new(config, menu);
 
     let mut event_pump = sdl_context.event_pump()
         .map_err(|e| Error::msg(e))?;
 
     loop {
         let event = event_pump.wait_event();
-        if app.handle_event(&event, &mut menu) {
+        if app.handle_event(&event) {
             break;
         }
 
-        app.draw(&menu)?;
+        app.draw(&mut renderer)?;
     }
 
     Ok(())

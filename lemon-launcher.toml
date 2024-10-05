@@ -1,0 +1,12 @@
+font_file = "GamePlayed-vYL7.ttf"
+font_size = 30
+
+background = "background.png"
+
+[menu]
+line_height = 40
+position = { x = 40, y = 40 }
+size = { width = 560, height = 400 }
+justify = "center"
+text_color = [0, 0, 0]
+hover_color = [255, 0, 255]
