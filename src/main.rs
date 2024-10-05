@@ -12,11 +12,15 @@ use menu_config::MenuConfig;
 use renderer::Renderer;
 
 fn main() -> Result<()> {
+    let config = LemonConfig::load_config("./lemon-launcher.toml")?;
+
     let sdl_context = sdl2::init()
         .map_err(|e| Error::msg(e))?;
 
     let ttf_context = sdl2::ttf::init()?;
-    let font = ttf_context.load_font("./GamePlayed-vYL7.ttf", 30)
+    let _img_context = sdl2::image::init(sdl2::image::InitFlag::PNG | sdl2::image::InitFlag::JPG)
+        .map_err(|e| Error::msg(e))?;
+    let font = ttf_context.load_font(&config.font_file, config.font_size)
         .map_err(|e| Error::msg(e))?;
 
     let window = sdl_context.video()
@@ -31,7 +35,6 @@ fn main() -> Result<()> {
 
     let mut renderer = Renderer::new(font, window)?;
 
-    let config = LemonConfig::load_config("./lemon-launcher.toml")?;
     let menu_config = MenuConfig::load_config("./games.toml")?;
     let menu = LemonMenu::new(menu_config);
     let mut app = LemonLauncher::new(config, menu);

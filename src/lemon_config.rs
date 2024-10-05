@@ -6,7 +6,7 @@ use std::fs;
 #[derive(Deserialize)]
 pub struct LemonConfig {
     pub font_file: String,
-    pub font_size: u32,
+    pub font_size: u16,
     pub background: String,
     pub menu: LemonMenuConfig
 }

@@ -1,10 +1,12 @@
 use anyhow::Result;
 use sdl2::{
-    event::Event, keyboard::Keycode, pixels::Color, rect::Rect
+    event::Event, keyboard::Keycode, rect::Rect
 };
+use std::path::Path;
 
 use crate::{
-    lemon_config::{Justify, LemonConfig, LemonMenuConfig}, lemon_menu::LemonMenu, renderer::Renderer
+    lemon_config::{LemonConfig, LemonMenuConfig}, lemon_menu::LemonMenu,
+    renderer::Renderer
 };
 
 pub struct LemonLauncher {
@@ -37,7 +39,8 @@ impl LemonLauncher {
     }
 
     pub fn draw(&self, renderer: &mut Renderer) -> Result<()> {
-        renderer.draw_background(Color::CYAN);
+        // renderer.draw_background(Color::CYAN);
+        renderer.draw_image(Path::new(&self.config.background))?;
 
         draw_menu(
             renderer,
