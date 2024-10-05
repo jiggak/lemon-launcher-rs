@@ -22,6 +22,7 @@ impl LemonConfig {
 
 #[derive(Deserialize)]
 pub struct LemonMenuConfig {
+    pub hover_offset: u32,
     pub line_height: u32,
     pub position: Point,
     pub size: Size,

@@ -4,7 +4,7 @@ use sdl2::{
 };
 
 use crate::{
-    lemon_config::{Justify, LemonConfig}, lemon_menu::LemonMenu, renderer::Renderer
+    lemon_config::{Justify, LemonConfig, LemonMenuConfig}, lemon_menu::LemonMenu, renderer::Renderer
 };
 
 pub struct LemonLauncher {
@@ -40,13 +40,9 @@ impl LemonLauncher {
         renderer.draw_background(Color::CYAN);
 
         draw_menu(
-            &self.menu,
             renderer,
-            self.config.menu.get_rect(),
-            self.config.menu.line_height,
-            &self.config.menu.justify,
-            self.config.menu.text_color,
-            self.config.menu.hover_color
+            &self.menu,
+            &self.config.menu
         )?;
 
         renderer.present();
@@ -56,16 +52,16 @@ impl LemonLauncher {
 }
 
 fn draw_menu(
-    menu: &LemonMenu,
     renderer: &mut Renderer,
-    region: Rect,
-    line_height: u32,
-    justify: &Justify,
-    text_color: (u8, u8, u8),
-    hover_color: (u8, u8, u8)
+    menu: &LemonMenu,
+    options: &LemonMenuConfig
 ) -> Result<()> {
+    let region = options.get_rect();
+    let line_height = options.line_height;
+    let justify = &options.justify;
+
     let rows = region.height() / line_height;
-    let top_rows = rows / 2;
+    let top_rows = options.hover_offset;
     let bottom_rows = rows - top_rows;
 
     let mut row_rect = Rect::new(
@@ -77,8 +73,8 @@ fn draw_menu(
 
     for entry in menu.iter_fwd().take(bottom_rows as usize) {
         let color = match menu.is_selected(entry) {
-            true => hover_color,
-            false => text_color
+            true => options.hover_color,
+            false => options.text_color
         };
 
         renderer.draw_text(&entry.title, color, row_rect, justify)?;
@@ -93,7 +89,7 @@ fn draw_menu(
     );
 
     for entry in menu.iter_rev().take(top_rows as usize) {
-        renderer.draw_text(&entry.title, text_color, row_rect, justify)?;
+        renderer.draw_text(&entry.title, options.text_color, row_rect, justify)?;
         row_rect = row_rect.top_shifted(line_height as i32);
     }
 

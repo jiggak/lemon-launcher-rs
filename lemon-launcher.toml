@@ -4,6 +4,7 @@ font_size = 30
 background = "background.png"
 
 [menu]
+row_offset = 4
 line_height = 40
 position = { x = 40, y = 40 }
 size = { width = 560, height = 400 }
