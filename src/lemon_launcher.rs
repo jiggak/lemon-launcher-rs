@@ -28,7 +28,7 @@ impl LemonLauncher {
                 match *keycode {
                     Keycode::Up => self.menu.move_cursor(-1),
                     Keycode::Down => self.menu.move_cursor(1),
-                    Keycode::Space => self.menu.activate(),
+                    Keycode::Return => self.menu.activate(),
                     Keycode::Backspace => self.menu.back(),
                     _ => ()
                 }

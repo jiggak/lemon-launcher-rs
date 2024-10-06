@@ -3,7 +3,8 @@ use crate::menu_config::{Menu, MenuConfig, MenuEntry, MenuEntryAction};
 pub struct LemonMenu {
     config: MenuConfig,
     menu: Menu,
-    index: usize
+    index: usize,
+    history: Vec<(Menu, usize)>
 }
 
 impl LemonMenu {
@@ -12,7 +13,8 @@ impl LemonMenu {
         LemonMenu {
             config,
             menu,
-            index: 0
+            index: 0,
+            history: vec![]
         }
     }
 
@@ -29,13 +31,16 @@ impl LemonMenu {
     }
 
     fn open_menu(&mut self, menu_id:&String) {
+        self.history.push((self.menu.clone(), self.index));
         self.menu = self.config.menus[menu_id].clone();
         self.index = 0;
     }
 
     pub fn back(&mut self) {
-        self.menu = self.config.main.clone();
-        self.index = 0;
+        if let Some(x) = self.history.pop() {
+            self.menu = x.0;
+            self.index = x.1;
+        }
     }
 
     pub fn move_cursor(&mut self, inc: i32) {
