@@ -21,20 +21,19 @@ impl LemonLauncher {
         }
     }
 
-    pub fn handle_event(&mut self, event: &Event) -> bool {
+    pub fn handle_event(&mut self, event: &Event) -> Result<(), EventError> {
         match event {
-            Event::Quit { .. } => true,
+            Event::Quit { .. } => Err(EventError::Exit),
             Event::KeyDown { keycode: Some(keycode), .. } => {
                 match *keycode {
-                    Keycode::Up => self.menu.move_cursor(-1),
-                    Keycode::Down => self.menu.move_cursor(1),
+                    Keycode::Up => Ok(self.menu.move_cursor(-1)),
+                    Keycode::Down => Ok(self.menu.move_cursor(1)),
                     Keycode::Return => self.menu.activate(),
-                    Keycode::Backspace => self.menu.back(),
-                    _ => ()
+                    Keycode::Backspace => Ok(self.menu.back()),
+                    _ => Ok(())
                 }
-                false
             }
-            _ => false
+            _ => Ok(())
         }
     }
 
@@ -52,6 +51,10 @@ impl LemonLauncher {
 
         Ok(())
     }
+}
+
+pub enum EventError {
+    Exit
 }
 
 fn draw_menu(

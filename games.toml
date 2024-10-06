@@ -1,22 +1,23 @@
 [main]
 name = "Main"
 entries = [
-   { title = "System", action = { menu = "system" } },
-   { title = "Games", action = { menu = "games" } }
-]
-
-[menus.system]
-entries = [
-   { title = "Shutdown", action = { exec = "sudo shutdown" } }
+   { title = "Games", action = { menu = "games" } },
+   { title = "Shutdown", action = { exec = "sudo shutdown" } },
+   { title = "Exit", action = "exit" }
 ]
 
 [menus.games]
 entries = [
-   { title = "Favorites", action = { menu = "ll://favories" } },
+   { title = "Favorites", action = "favorites" },
    { title = "Fighting Games", action = { menu = "fighting_games" } },
    { title = "Free Games", action = { menu = "free_games" } },
    { title = "Puzzle Games", action = { menu = "puzzle_games" } },
-   { title = "Sports Games", action = { menu = "sports_games"  } }
+   { title = "Sports Games", action = { menu = "sports_games"  } },
+   { title = "Airplane Games", action = { menu = "airplane_games"  } },
+   { title = "Classic Games", action = { menu = "classic_games"  } },
+   { title = "Maze Games", action = { menu = "maze_games"  } },
+   { title = "War Games", action = { menu = "war_games"  } },
+   { title = "Platform Games", action = { menu = "platform_games"  } },
 ]
 
 [menus.free_games]
@@ -75,4 +76,65 @@ entries = [
    { action = { rom = "openice" }, title = "2 on 2 Open Ice Challenge" },
    { action = { rom = "neocup98" }, title = "Neo-Geo Cup 98" },
    { action = { rom = "pwrgoal" }, title = "Power Goal" }
+]
+
+[menus.airplane_games]
+entries = [
+   { action = { rom = "1942" }, title = "1942" },
+   { action = { rom = "1943" }, title = "1943 - The Battle of Midway" },
+   { action = { rom = "cawing" }, title = "Carrier Air Wing" },
+   { action = { rom = "batrider" }, title = "Armed Police Batrider" },
+   { action = { rom = "agallet" }, title = "Air Gallet" },
+   { action = { rom = "19xx" }, title = "19xx: The war Against Destiny" },
+   { action = { rom = "s1945p" }, title = "Strikes 1945 Plus" }
+]
+
+[menus.classic_games]
+entries = [
+   { action = { rom = "pacman" }, title = "Pac-Man" },
+   { action = { rom = "joust" }, title = "Joust" },
+   { action = { rom = "marble" }, title = "Marble Madness" },
+   { action = { rom = "ldrun" }, title = "Lode Runner" },
+   { action = { rom = "galaga" }, title = "Galaga" },
+   { action = { rom = "frogger" }, title = "Frogger" },
+   { action = { rom = "arkanoid" }, title = "Arkanoid" },
+   { action = { rom = "digbug" }, title = "Dig Dug" },
+   { action = { rom = "dkong" }, title = "Donkey Kong" },
+   { action = { rom = "galaxian" }, title = "Galaxian" },
+   { action = { rom = "mario" }, title = "Mario Bros" },
+   { action = { rom = "mspacman" }, title = "Ms. Pac-Man" },
+   { action = { rom = "qbert" }, title = "Q*bert" },
+   { action = { rom = "arknoid2" }, title = "Arkanoid - Revenge of DOH" },
+   { action = { rom = "invaders" }, title = "Space Invaders" },
+   { action = { rom = "invadpt2" }, title = "Space Invaders Part II" }
+]
+
+[menus.maze_games]
+entries = [
+   { action = { rom = "pacmania" }, title = "Pac-Mania" },
+   { action = { rom = "bombrman" }, title = "Bomberman" },
+   { action = { rom = "digdug" }, title = "Dig Dug" },
+   { action = { rom = "digdug2" }, title = "Dig Dug II" },
+   { action = { rom = "hyperpac" }, title = "Hyper Pac-Man" },
+   { action = { rom = "jrpacman" }, title = "Jr. Pac-Man" }
+]
+
+[menus.war_games]
+entries = [
+   { action = { rom = "btlecity" }, title = "Vs. Battle City" },
+   { action = { rom = "mslug" }, title = "Metal Slug" },
+   { action = { rom = "mslug2" }, title = "Metal Slug 2" },
+   { action = { rom = "mslug3" }, title = "Metal Slug 3" },
+   { action = { rom = "tankfrce" }, title = "Tank Force" }
+]
+
+[menus.platform_games]
+entries = [
+   { action = { rom = "suprmrio" }, title = "Vs. Super Mario Bros" },
+   { action = { rom = "bublbobl" }, title = "Bubble Bobble" },
+   { action = { rom = "bublbob2" }, title = "Bubble Bobble 2" },
+   { action = { rom = "pacland" }, title = "Pac-Land" },
+   { action = { rom = "rampage" }, title = "Rampage" },
+   { action = { rom = "shinobi" }, title = "Shinobi" },
+   { action = { rom = "wboy" }, title = "Wonder Boy" }
 ]

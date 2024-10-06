@@ -44,7 +44,7 @@ fn main() -> Result<()> {
 
     loop {
         let event = event_pump.wait_event();
-        if app.handle_event(&event) {
+        if app.handle_event(&event).is_err() {
             break;
         }
 

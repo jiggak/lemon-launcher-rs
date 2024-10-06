@@ -1,4 +1,4 @@
-use crate::menu_config::{Menu, MenuConfig, MenuEntry, MenuEntryAction};
+use crate::{lemon_launcher::EventError, menu_config::{BuiltInAction, Menu, MenuConfig, MenuEntry, MenuEntryAction}};
 
 pub struct LemonMenu {
     config: MenuConfig,
@@ -22,11 +22,16 @@ impl LemonMenu {
         &self.menu.entries[self.index] == entry
     }
 
-    pub fn activate(&mut self) {
+    pub fn activate(&mut self) -> Result<(), EventError> {
         let entry = self.menu.entries[self.index].action.clone();
         match entry {
-            MenuEntryAction::MenuAction { menu } => self.open_menu(&menu),
-            _ => ()
+            MenuEntryAction::Menu { menu } => {
+                Ok(self.open_menu(&menu))
+            },
+            MenuEntryAction::BuiltIn(BuiltInAction::Exit) => {
+                Err(EventError::Exit)
+            },
+            _ => Ok(())
         }
     }
 

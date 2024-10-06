@@ -31,14 +31,29 @@ pub struct MenuEntry {
 #[derive(Deserialize, Clone, PartialEq)]
 #[serde(untagged)]
 pub enum MenuEntryAction {
-    MenuAction {
+    BuiltIn(BuiltInAction),
+    /// Open menu
+    Menu {
+        /// Key of menu to open
         menu: String
     },
-    ExecAction {
+    /// Execute shell command
+    Exec {
         exec: String
     },
-    RomAction {
+    /// Launch rom using mame
+    Rom {
+        /// Rom name (e.g. sf2.zip)
         rom: String,
+        /// Optional extra mame arguments
         params: Option<String>
     }
+}
+
+#[derive(Deserialize, Clone, PartialEq)]
+pub enum BuiltInAction {
+    #[serde(rename="exit")]
+    Exit,
+    #[serde(rename="favorites")]
+    Favorites
 }
