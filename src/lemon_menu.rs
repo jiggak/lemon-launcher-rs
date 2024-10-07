@@ -1,8 +1,10 @@
+use std::collections::HashMap;
+
 use anyhow::Result;
 
 use crate::{
     lemon_launcher::LemonError,
-    menu_config::{BuiltInAction, Menu, MenuConfig, MenuEntries, MenuEntry, MenuEntryAction},
+    menu_config::{BuiltInAction, MenuConfig, MenuEntry, MenuEntryAction, Query},
     rom_library::RomLibrary
 };
 
@@ -32,20 +34,29 @@ impl LemonMenu {
         let entry = self.entries[self.index].action.clone();
         match entry {
             MenuEntryAction::Menu { menu } => {
-                self.open_menu(&menu)
+                let entries = self.config.menus[&menu].entries.clone();
+                Ok(self.set_entries(entries))
             },
             MenuEntryAction::BuiltIn(BuiltInAction::Exit) => {
                 Err(LemonError::Exit.into())
             },
-            _ => Ok(())
+            MenuEntryAction::Query { query, params } => {
+                let entries = exec_query(&query, params)?;
+                Ok(self.set_entries(entries))
+            },
+            MenuEntryAction::Exec { exec } => {
+                panic!("exec action not implemented");
+            },
+            MenuEntryAction::Rom { rom, params } => {
+                panic!("rom action not implemented");
+            }
         }
     }
 
-    fn open_menu(&mut self, menu_id:&String) -> Result<()> {
+    fn set_entries(&mut self, entries: Vec<MenuEntry>) {
         self.history.push((self.entries.clone(), self.index));
-        self.entries = self.config.menus[menu_id].get_entires()?;
+        self.entries = entries;
         self.index = 0;
-        Ok(())
     }
 
     pub fn back(&mut self) {
@@ -74,21 +85,37 @@ impl LemonMenu {
     }
 }
 
-impl Menu {
-    pub fn get_entires(&self) -> Result<Vec<MenuEntry>> {
-        match &self.entries {
-            MenuEntries::Static(entries) => Ok(entries.clone()),
-            MenuEntries::Query { query } => {
-                let rom_lib = RomLibrary::open("games.sqlite")?;
-                let categories = rom_lib.list_categories()?;
-                let entries = categories.iter()
-                    .map(|c| MenuEntry {
-                        title: c.clone(),
-                        action: MenuEntryAction::Menu { menu: "foo".to_string() }
-                    })
-                    .collect();
-                Ok(entries)
-            }
+pub fn exec_query(query: &Query, params: Option<HashMap<String, String>>) -> Result<Vec<MenuEntry>> {
+    let rom_lib = RomLibrary::open("games.sqlite")?;
+
+    match query {
+        Query::Categories => {
+            let categories = rom_lib.list_categories()?;
+            let entries = categories.iter()
+                .map(|c| MenuEntry {
+                    title: c.clone(),
+                    action: MenuEntryAction::Query {
+                        query: Query::Roms,
+                        params: Some(HashMap::from([(String::from("genre"), c.clone())]))
+                    }
+                })
+                .collect();
+            Ok(entries)
+        },
+        Query::Roms => {
+            // FIXME figure out how to pass params to list_roms()
+            let genre = &params.unwrap()["genre"];
+            let roms = rom_lib.list_roms(genre)?;
+            let entries = roms.iter()
+                .map(|r| MenuEntry {
+                    title: r.title.clone(),
+                    action: MenuEntryAction::Rom {
+                        rom: r.name.clone(),
+                        params: None
+                    }
+                })
+                .collect();
+            Ok(entries)
         }
     }
 }

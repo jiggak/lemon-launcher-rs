@@ -59,11 +59,13 @@ impl RomLibrary {
     pub fn list_categories(&self) -> Result<Vec<String>> {
         let mut stmt = self.db.prepare("select genre from roms group by genre")?;
         let rows = stmt.query([])?;
-        Ok(rows.map(|r| r.get(0))
-            .collect()?)
+        let categories = rows
+            .map(|r| r.get(0))
+            .collect()?;
+        Ok(categories)
     }
 
-    pub fn list_roms(&self, category:&String) -> Result<Vec<Rom>> {
+    pub fn list_roms(&self, category: &String) -> Result<Vec<Rom>> {
         let mut stmt = self.db.prepare("select name, title, genre from roms where genre = ?1")?;
         let rows = stmt.query([category])?;
         Ok(rows.map(|r| Ok(Rom {

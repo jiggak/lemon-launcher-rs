@@ -4,7 +4,7 @@ use std::{collections::HashMap, fs};
 
 #[derive(Deserialize)]
 pub struct MenuConfig {
-    pub main: MainMenu,
+    pub main: Menu,
     pub menus: HashMap<String, Menu>
 }
 
@@ -18,22 +18,8 @@ impl MenuConfig {
 }
 
 #[derive(Deserialize, Clone)]
-pub struct MainMenu {
-    pub entries: Vec<MenuEntry>
-}
-
-#[derive(Deserialize, Clone)]
 pub struct Menu {
-    pub entries: MenuEntries
-}
-
-#[derive(Deserialize, Clone)]
-#[serde(untagged)]
-pub enum MenuEntries {
-    Static(Vec<MenuEntry>),
-    Query {
-        query: String
-    }
+    pub entries: Vec<MenuEntry>
 }
 
 #[derive(Deserialize, Clone, PartialEq)]
@@ -57,17 +43,28 @@ pub enum MenuEntryAction {
     },
     /// Launch rom using mame
     Rom {
-        /// Rom name (e.g. sf2.zip)
+        /// Rom name with file extension (e.g. sf2)
         rom: String,
         /// Optional extra mame arguments
         params: Option<String>
+    },
+    /// Open menu with entries from rom lib query
+    Query {
+        query: Query,
+        params: Option<HashMap<String, String>>
     }
 }
 
 #[derive(Deserialize, Clone, PartialEq)]
 pub enum BuiltInAction {
     #[serde(rename="exit")]
-    Exit,
-    #[serde(rename="favorites")]
-    Favorites
+    Exit
+}
+
+#[derive(Deserialize, Clone, PartialEq)]
+pub enum Query {
+    #[serde(rename="categories")]
+    Categories,
+    #[serde(rename="roms")]
+    Roms
 }

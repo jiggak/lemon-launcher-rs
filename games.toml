@@ -1,14 +1,12 @@
 [main]
 name = "Main"
 entries = [
-   { title = "Favorites", action = "favorites" },
-   { title = "Categories", action = { menu = "categories" } },
+   { title = "Favourites", action = { query = "roms", params = { favourite = "1" } } },
+   { title = "Categories", action = { query = "categories" } },
+   { title = "Fighting Games", action = { query = "roms", params = { genre = "Fighting" } } },
    { title = "Shutdown", action = { exec = "sudo shutdown" } },
    { title = "Exit", action = "exit" }
 ]
-
-[menus.categories]
-entries = { query = "categories" }
 
 [menus.games]
 entries = [
@@ -20,7 +18,7 @@ entries = [
    { title = "Classic Games", action = { menu = "classic_games"  } },
    { title = "Maze Games", action = { menu = "maze_games"  } },
    { title = "War Games", action = { menu = "war_games"  } },
-   { title = "Platform Games", action = { menu = "platform_games"  } },
+   { title = "Platform Games", action = { menu = "platform_games"  } }
 ]
 
 [menus.free_games]
