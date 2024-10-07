@@ -1,10 +1,15 @@
+mod cli;
 mod lemon_config;
 mod lemon_menu;
 mod lemon_launcher;
 mod menu_config;
 mod renderer;
+mod rom_library;
+mod scan;
 
 use anyhow::{Error, Result};
+use cli::{Cli, Commands, Parser};
+
 use lemon_config::LemonConfig;
 use lemon_launcher::LemonLauncher;
 use lemon_menu::LemonMenu;
@@ -12,8 +17,19 @@ use menu_config::MenuConfig;
 use renderer::Renderer;
 
 fn main() -> Result<()> {
+    let cli = Cli::parse();
+
     let config = LemonConfig::load_config("./lemon-launcher.toml")?;
 
+    match cli.command {
+        Some(Commands::Scan { mame_list, genre_ini, roms_dir }) => {
+            scan::scan(&mame_list, &genre_ini, &roms_dir)
+        },
+        _ => launch(config)
+    }
+}
+
+fn launch(config: LemonConfig) -> Result<()> {
     let sdl_context = sdl2::init()
         .map_err(|e| Error::msg(e))?;
 
