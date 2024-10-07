@@ -1,8 +1,9 @@
+use std::path::Path;
+
 use anyhow::Result;
 use sdl2::{
     event::Event, keyboard::Keycode, rect::Rect
 };
-use std::path::Path;
 
 use crate::{
     lemon_config::{LemonConfig, LemonMenuConfig}, lemon_menu::LemonMenu,
@@ -21,9 +22,9 @@ impl LemonLauncher {
         }
     }
 
-    pub fn handle_event(&mut self, event: &Event) -> Result<(), EventError> {
+    pub fn handle_event(&mut self, event: &Event) -> Result<()> {
         match event {
-            Event::Quit { .. } => Err(EventError::Exit),
+            Event::Quit { .. } => Err(LemonError::Exit.into()),
             Event::KeyDown { keycode: Some(keycode), .. } => {
                 match *keycode {
                     Keycode::Up => Ok(self.menu.move_cursor(-1)),
@@ -53,7 +54,9 @@ impl LemonLauncher {
     }
 }
 
-pub enum EventError {
+#[derive(thiserror::Error, Debug)]
+pub enum LemonError {
+    #[error("Exit requested")]
     Exit
 }
 

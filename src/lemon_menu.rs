@@ -1,68 +1,94 @@
-use crate::{lemon_launcher::EventError, menu_config::{BuiltInAction, Menu, MenuConfig, MenuEntry, MenuEntryAction}};
+use anyhow::Result;
+
+use crate::{
+    lemon_launcher::LemonError,
+    menu_config::{BuiltInAction, Menu, MenuConfig, MenuEntries, MenuEntry, MenuEntryAction},
+    rom_library::RomLibrary
+};
 
 pub struct LemonMenu {
     config: MenuConfig,
-    menu: Menu,
+    entries: Vec<MenuEntry>,
     index: usize,
-    history: Vec<(Menu, usize)>
+    history: Vec<(Vec<MenuEntry>, usize)>
 }
 
 impl LemonMenu {
     pub fn new(config: MenuConfig) -> Self {
-        let menu = config.main.clone();
+        let entries = config.main.entries.clone();
         LemonMenu {
             config,
-            menu,
+            entries,
             index: 0,
             history: vec![]
         }
     }
 
     pub fn is_selected(&self, entry: &MenuEntry) -> bool {
-        &self.menu.entries[self.index] == entry
+        &self.entries[self.index] == entry
     }
 
-    pub fn activate(&mut self) -> Result<(), EventError> {
-        let entry = self.menu.entries[self.index].action.clone();
+    pub fn activate(&mut self) -> Result<()> {
+        let entry = self.entries[self.index].action.clone();
         match entry {
             MenuEntryAction::Menu { menu } => {
-                Ok(self.open_menu(&menu))
+                self.open_menu(&menu)
             },
             MenuEntryAction::BuiltIn(BuiltInAction::Exit) => {
-                Err(EventError::Exit)
+                Err(LemonError::Exit.into())
             },
             _ => Ok(())
         }
     }
 
-    fn open_menu(&mut self, menu_id:&String) {
-        self.history.push((self.menu.clone(), self.index));
-        self.menu = self.config.menus[menu_id].clone();
+    fn open_menu(&mut self, menu_id:&String) -> Result<()> {
+        self.history.push((self.entries.clone(), self.index));
+        self.entries = self.config.menus[menu_id].get_entires()?;
         self.index = 0;
+        Ok(())
     }
 
     pub fn back(&mut self) {
         if let Some(x) = self.history.pop() {
-            self.menu = x.0;
+            self.entries = x.0;
             self.index = x.1;
         }
     }
 
     pub fn move_cursor(&mut self, inc: i32) {
         let new_index = self.index as i32 + inc;
-        if new_index >= 0 && new_index < self.menu.entries.len() as i32 {
+        if new_index >= 0 && new_index < self.entries.len() as i32 {
             self.index = new_index as usize;
         }
     }
 
     pub fn iter_fwd(&self) -> impl DoubleEndedIterator<Item = &MenuEntry> {
-        self.menu.entries.iter()
+        self.entries.iter()
             .skip(self.index)
     }
 
     pub fn iter_rev(&self) -> impl DoubleEndedIterator<Item = &MenuEntry> {
-        self.menu.entries.iter()
+        self.entries.iter()
             .take(self.index)
             .rev()
+    }
+}
+
+impl Menu {
+    pub fn get_entires(&self) -> Result<Vec<MenuEntry>> {
+        match &self.entries {
+            MenuEntries::Static(entries) => Ok(entries.clone()),
+            MenuEntries::Query { query } => {
+                let rom_lib = RomLibrary::open("games.sqlite")?;
+                let categories = rom_lib.list_categories()?;
+                let entries = categories.iter()
+                    .map(|c| MenuEntry {
+                        title: c.clone(),
+                        action: MenuEntryAction::Menu { menu: "foo".to_string() }
+                    })
+                    .collect();
+                Ok(entries)
+            }
+        }
     }
 }

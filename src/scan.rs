@@ -22,7 +22,7 @@ pub fn scan(mame_list: &Path, genre_ini: &Path, roms_dir: &Path) -> Result<()> {
             if let Some(title) = titles.get(rom) {
                 rom_meta.insert(rom, Rom {
                     name: rom.clone(),
-                    title: title.clone(),
+                    title: title.trim().into(),
                     category: category.clone()
                 });
             } else {
@@ -31,9 +31,7 @@ pub fn scan(mame_list: &Path, genre_ini: &Path, roms_dir: &Path) -> Result<()> {
         }
     }
 
-    let rom_lib = RomLibrary::open("games.sqlite")?;
-
-    rom_lib.clear()?;
+    let mut roms = vec![];
 
     for dir_entry in fs::read_dir(roms_dir)? {
         let dir_entry = dir_entry?;
@@ -49,12 +47,17 @@ pub fn scan(mame_list: &Path, genre_ini: &Path, roms_dir: &Path) -> Result<()> {
             .to_string();
 
         if let Some(rom) = rom_meta.get(&rom_name) {
-            rom_lib.add_rom(&rom)?;
-            println!("Added rom {rom_name}");
+            roms.push(rom);
         } else {
             println!("Rom meta data not found {rom_name}");
         }
     }
+
+    let rom_lib = RomLibrary::open("games.sqlite")?;
+    rom_lib.clear()?;
+    rom_lib.add_roms(&roms)?;
+
+    println!("Added {} roms to library", roms.len());
 
     Ok(())
 }
@@ -85,7 +88,8 @@ fn parse_mame_list_line(line: String) -> Result<(String, String)> {
 }
 
 fn parse_genre_ini(genre_ini: &Path) -> Result<Ini> {
-    let mut genre = Ini::new();
+    // new_cs() to preserve case of category names
+    let mut genre = Ini::new_cs();
 
     genre.load(genre_ini)
         .map_err(|e| Error::msg(e))?;

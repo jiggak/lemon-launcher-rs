@@ -1,14 +1,17 @@
 [main]
 name = "Main"
 entries = [
-   { title = "Games", action = { menu = "games" } },
+   { title = "Favorites", action = "favorites" },
+   { title = "Categories", action = { menu = "categories" } },
    { title = "Shutdown", action = { exec = "sudo shutdown" } },
    { title = "Exit", action = "exit" }
 ]
 
+[menus.categories]
+entries = { query = "categories" }
+
 [menus.games]
 entries = [
-   { title = "Favorites", action = "favorites" },
    { title = "Fighting Games", action = { menu = "fighting_games" } },
    { title = "Free Games", action = { menu = "free_games" } },
    { title = "Puzzle Games", action = { menu = "puzzle_games" } },

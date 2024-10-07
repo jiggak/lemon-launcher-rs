@@ -57,10 +57,10 @@ impl<'a, 'b> Renderer<'a, 'b> {
             .map_err(|e| Error::msg(e))
     }
 
-    pub fn draw_background<C: Into<Color>>(&mut self, color: C) {
-        self.canvas.set_draw_color(color);
-        self.canvas.clear();
-    }
+    // pub fn draw_background<C: Into<Color>>(&mut self, color: C) {
+    //     self.canvas.set_draw_color(color);
+    //     self.canvas.clear();
+    // }
 
     pub fn present(&mut self) {
         self.canvas.present()
