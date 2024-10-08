@@ -2,6 +2,7 @@ mod cli;
 mod lemon_config;
 mod lemon_menu;
 mod lemon_launcher;
+mod mame_xml;
 mod menu_config;
 mod renderer;
 mod rom_library;
@@ -22,10 +23,12 @@ fn main() -> Result<()> {
     let config = LemonConfig::load_config("./lemon-launcher.toml")?;
 
     match cli.command {
-        Some(Commands::Scan { mame_list, genre_ini, roms_dir }) => {
-            scan::scan(&mame_list, &genre_ini, &roms_dir)
+        Some(Commands::Scan { mame_xml, genre_ini, roms_dir }) => {
+            scan::scan(&mame_xml, &genre_ini, &roms_dir)
         },
-        _ => launch(config)
+        None | Some(Commands::Launch) => {
+            launch(config)
+        }
     }
 }
 
@@ -60,8 +63,10 @@ fn launch(config: LemonConfig) -> Result<()> {
 
     loop {
         let event = event_pump.wait_event();
-        if app.handle_event(&event).is_err() {
-            break;
+        match app.handle_event(&event) {
+            // Err(LemonError::Exit) => break,
+            Err(e) => return Err(e),
+            _ => ()
         }
 
         app.draw(&mut renderer)?;

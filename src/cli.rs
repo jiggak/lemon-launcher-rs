@@ -14,7 +14,7 @@ pub struct Cli {
 pub enum Commands {
     Launch,
     Scan {
-        mame_list: PathBuf,
+        mame_xml: PathBuf,
         genre_ini: PathBuf,
         roms_dir: PathBuf
     }

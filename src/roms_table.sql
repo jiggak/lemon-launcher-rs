@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS roms (
    params       TEXT,
    play_count   INTEGER NOT NULL DEFAULT 0,
    favourite    BOOLEAN NOT NULL DEFAULT FALSE,
-   hide         BOOLEAN NOT NULL DEFAULT FALSE
+   clone_of     TEXT
 );

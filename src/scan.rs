@@ -1,17 +1,15 @@
-use std::{
-    collections::HashMap,
-    fs::{self, File},
-    io::{BufRead, BufReader},
-    path::Path
-};
+use std::{collections::HashMap, fs, path::Path};
 
 use anyhow::{Error, Result};
 use configparser::ini::Ini;
 
-use crate::rom_library::{Rom, RomLibrary};
+use crate::{
+    mame_xml::Mame,
+    rom_library::{Rom, RomLibrary}
+};
 
-pub fn scan(mame_list: &Path, genre_ini: &Path, roms_dir: &Path) -> Result<()> {
-    let titles = parse_mame_list(mame_list)?;
+pub fn scan(mame_xml: &Path, genre_ini: &Path, roms_dir: &Path) -> Result<()> {
+    let mame_db = Mame::load_xml_map(mame_xml)?;
     let categories = parse_genre_ini(genre_ini)?;
 
     let mut rom_meta: HashMap<&String, Rom> = HashMap::new();
@@ -19,11 +17,12 @@ pub fn scan(mame_list: &Path, genre_ini: &Path, roms_dir: &Path) -> Result<()> {
     let category_map = categories.get_map_ref();
     for (category, category_roms) in category_map {
         for (rom, _) in category_roms {
-            if let Some(title) = titles.get(rom) {
+            if let Some(machine) = mame_db.get(rom) {
                 rom_meta.insert(rom, Rom {
                     name: rom.clone(),
-                    title: title.clone(),
-                    category: category.clone()
+                    title: machine.description.clone(),
+                    category: category.clone(),
+                    clone_of: machine.clone_of.clone()
                 });
             } else {
                 println!("Title for rom {rom} not found");
@@ -60,35 +59,6 @@ pub fn scan(mame_list: &Path, genre_ini: &Path, roms_dir: &Path) -> Result<()> {
     println!("Added {} roms to library", roms.len());
 
     Ok(())
-}
-
-fn parse_mame_list(mame_list: &Path) -> Result<HashMap<String, String>> {
-    let file = File::open(mame_list)?;
-    let reader = BufReader::new(file);
-
-    let mut title_map = HashMap::new();
-
-    for line in reader.lines() {
-        let line = parse_mame_list_line(line?)?;
-        if line.0 == "Name:" {
-            // Skip header row
-            continue;
-        }
-
-        title_map.insert(line.0, line.1);
-    }
-
-    Ok(title_map)
-}
-
-fn parse_mame_list_line(line: String) -> Result<(String, String)> {
-    line.split_once(' ')
-        .ok_or(Error::msg("Expected space delimited line in mame list file"))
-        .map(|x| (
-            x.0.into(),
-            // trim leading whitespace from title and remove quotes
-            x.1.trim().trim_matches('"').into()
-        ))
 }
 
 fn parse_genre_ini(genre_ini: &Path) -> Result<Ini> {

@@ -11,7 +11,8 @@ pub struct RomLibrary {
 pub struct Rom {
     pub name: String,
     pub title: String,
-    pub category: String
+    pub category: String,
+    pub clone_of: Option<String>
 }
 
 impl RomLibrary {
@@ -30,8 +31,8 @@ impl RomLibrary {
 
     pub fn add_rom(&self, rom: &Rom) -> Result<()> {
         self.db.execute(
-            "insert into roms (name, title, genre) values (?1, ?2, ?3)",
-            params![rom.name, rom.title, rom.category]
+            "insert into roms (name, title, genre, clone_of) values (?1, ?2, ?3, ?4)",
+            params![rom.name, rom.title, rom.category, rom.clone_of]
         )?;
         Ok(())
     }
@@ -47,17 +48,20 @@ impl RomLibrary {
             PRAGMA temp_store = MEMORY;
         ")?;
 
-        let mut stmt = self.db.prepare("insert into roms (name, title, genre) values (?1, ?2, ?3)")?;
+        let mut stmt = self.db.prepare("
+            insert into roms (name, title, genre, clone_of)
+            values (?1, ?2, ?3, ?4)
+        ")?;
 
         for rom in roms {
-            stmt.execute(params![rom.name, rom.title, rom.category])?;
+            stmt.execute(params![rom.name, rom.title, rom.category, rom.clone_of])?;
         }
 
         Ok(())
     }
 
     pub fn list_categories(&self) -> Result<Vec<String>> {
-        let mut stmt = self.db.prepare("select genre from roms group by genre")?;
+        let mut stmt = self.db.prepare("select genre from roms where clone_of is null group by genre")?;
         let rows = stmt.query([])?;
         let categories = rows
             .map(|r| r.get(0))
@@ -67,8 +71,9 @@ impl RomLibrary {
 
     pub fn list_roms(&self, category: &String) -> Result<Vec<Rom>> {
         let mut stmt = self.db.prepare("
-            select name, title, genre
-            from roms where genre = ?1
+            select name, title, genre, clone_of
+            from roms
+            where clone_of is null and genre = ?1
             order by title
         ")?;
 
@@ -77,7 +82,8 @@ impl RomLibrary {
             .map(|r| Ok(Rom {
                 name: r.get(0)?,
                 title: r.get(1)?,
-                category: r.get(2)?
+                category: r.get(2)?,
+                clone_of: r.get(3)?
             }))
             .collect()?;
 
