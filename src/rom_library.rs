@@ -66,12 +66,21 @@ impl RomLibrary {
     }
 
     pub fn list_roms(&self, category: &String) -> Result<Vec<Rom>> {
-        let mut stmt = self.db.prepare("select name, title, genre from roms where genre = ?1")?;
+        let mut stmt = self.db.prepare("
+            select name, title, genre
+            from roms where genre = ?1
+            order by title
+        ")?;
+
         let rows = stmt.query([category])?;
-        Ok(rows.map(|r| Ok(Rom {
-            name: r.get(0)?,
-            title: r.get(1)?,
-            category: r.get(2)?
-        })).collect()?)
+        let roms = rows
+            .map(|r| Ok(Rom {
+                name: r.get(0)?,
+                title: r.get(1)?,
+                category: r.get(2)?
+            }))
+            .collect()?;
+
+        Ok(roms)
     }
 }

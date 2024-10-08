@@ -22,7 +22,7 @@ pub fn scan(mame_list: &Path, genre_ini: &Path, roms_dir: &Path) -> Result<()> {
             if let Some(title) = titles.get(rom) {
                 rom_meta.insert(rom, Rom {
                     name: rom.clone(),
-                    title: title.trim().into(),
+                    title: title.clone(),
                     category: category.clone()
                 });
             } else {
@@ -84,7 +84,11 @@ fn parse_mame_list(mame_list: &Path) -> Result<HashMap<String, String>> {
 fn parse_mame_list_line(line: String) -> Result<(String, String)> {
     line.split_once(' ')
         .ok_or(Error::msg("Expected space delimited line in mame list file"))
-        .map(|x| (x.0.into(), x.1.into()))
+        .map(|x| (
+            x.0.into(),
+            // trim leading whitespace from title and remove quotes
+            x.1.trim().trim_matches('"').into()
+        ))
 }
 
 fn parse_genre_ini(genre_ini: &Path) -> Result<Ini> {
