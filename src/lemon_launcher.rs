@@ -23,12 +23,15 @@ impl LemonLauncher {
     }
 
     pub fn handle_event(&mut self, event: &Event) -> Result<()> {
+        let row_count = self.config.get_row_count();
         match event {
             Event::Quit { .. } => Err(LemonError::Exit.into()),
             Event::KeyDown { keycode: Some(keycode), .. } => {
                 match *keycode {
                     Keycode::Up => Ok(self.menu.move_cursor(-1)),
+                    Keycode::Left => Ok(self.menu.move_cursor(-row_count)),
                     Keycode::Down => Ok(self.menu.move_cursor(1)),
+                    Keycode::Right => Ok(self.menu.move_cursor(row_count)),
                     Keycode::Return => self.menu.activate(),
                     Keycode::Backspace => Ok(self.menu.back()),
                     _ => Ok(())

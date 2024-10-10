@@ -18,6 +18,10 @@ impl LemonConfig {
 
         Ok(config)
     }
+
+    pub fn get_row_count(&self) -> i32 {
+        self.menu.size.height as i32 / self.menu.line_height as i32
+    }
 }
 
 #[derive(Deserialize)]
