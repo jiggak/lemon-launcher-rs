@@ -2,7 +2,7 @@ use std::path::Path;
 
 use anyhow::Result;
 use sdl2::{
-    event::Event, keyboard::Keycode, rect::Rect
+    event::Event, keyboard::Keycode, pixels::Color, rect::Rect
 };
 
 use crate::{
@@ -42,7 +42,7 @@ impl LemonLauncher {
     }
 
     pub fn draw(&self, renderer: &mut Renderer) -> Result<()> {
-        // renderer.draw_background(Color::CYAN);
+        renderer.draw_background(Color::BLACK);
         renderer.draw_image(Path::new(&self.config.background))?;
 
         draw_menu(

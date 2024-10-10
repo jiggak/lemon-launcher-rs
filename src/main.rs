@@ -45,6 +45,7 @@ fn launch(config: LemonConfig) -> Result<()> {
     let window = sdl_context.video()
         .map_err(|e| Error::msg(e))?
         .window("Lemon Launcher", 640, 480)
+        .resizable()
         .position_centered()
         .opengl()
         .build()?;

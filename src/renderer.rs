@@ -14,9 +14,15 @@ pub struct Renderer<'a, 'b> {
 
 impl<'a, 'b> Renderer<'a, 'b> {
     pub fn new(font: Font<'a, 'b>, window: Window) -> Result<Self> {
-        let canvas = window
+        let (win_width, win_height) = window.size();
+
+        let mut canvas = window
             .into_canvas()
             .build()?;
+
+        // using window size as logical size lets the interface scale
+        canvas.set_logical_size(win_width, win_height)?;
+
         Ok(Renderer {
             font, canvas
         })
@@ -57,10 +63,10 @@ impl<'a, 'b> Renderer<'a, 'b> {
             .map_err(|e| Error::msg(e))
     }
 
-    // pub fn draw_background<C: Into<Color>>(&mut self, color: C) {
-    //     self.canvas.set_draw_color(color);
-    //     self.canvas.clear();
-    // }
+    pub fn draw_background<C: Into<Color>>(&mut self, color: C) {
+        self.canvas.set_draw_color(color);
+        self.canvas.clear();
+    }
 
     pub fn present(&mut self) {
         self.canvas.present()
