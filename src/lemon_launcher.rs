@@ -6,8 +6,7 @@ use sdl2::{
 };
 
 use crate::{
-    lemon_config::{LemonConfig, LemonMenuConfig}, lemon_menu::LemonMenu,
-    renderer::Renderer
+    lemon_config::LemonConfig, lemon_menu::LemonMenu, renderer::Renderer
 };
 
 pub struct LemonLauncher {
@@ -45,13 +44,52 @@ impl LemonLauncher {
         renderer.draw_background(Color::BLACK);
         renderer.draw_image(Path::new(&self.config.background))?;
 
-        draw_menu(
-            renderer,
-            &self.menu,
-            &self.config.menu
-        )?;
+        self.draw_menu(renderer)?;
 
         renderer.present();
+
+        Ok(())
+    }
+
+    fn draw_menu(&self, renderer: &mut Renderer) -> Result<()> {
+        let region = self.config.menu.get_rect();
+        let line_height = self.config.menu.line_height;
+        let justify = &self.config.menu.justify;
+        let text_color = self.config.menu.text_color;
+        let hover_color = self.config.menu.hover_color;
+
+        let rows = region.height() / line_height;
+        let top_rows = self.config.menu.hover_offset;
+        let bottom_rows = rows - top_rows;
+
+        let mut row_rect = Rect::new(
+            region.x,
+            region.y + (top_rows * line_height) as i32,
+            region.width(),
+            line_height
+        );
+
+        for entry in self.menu.iter_fwd().take(bottom_rows as usize) {
+            let color = match self.menu.is_selected(entry) {
+                true => hover_color,
+                false => text_color
+            };
+
+            renderer.draw_text(&entry.title, color, row_rect, justify)?;
+            row_rect = row_rect.bottom_shifted(line_height as i32);
+        }
+
+        let mut row_rect = Rect::new(
+            region.x,
+            region.y + ((top_rows - 1) * line_height) as i32,
+            region.width(),
+            line_height
+        );
+
+        for entry in self.menu.iter_rev().take(top_rows as usize) {
+            renderer.draw_text(&entry.title, text_color, row_rect, justify)?;
+            row_rect = row_rect.top_shifted(line_height as i32);
+        }
 
         Ok(())
     }
@@ -61,49 +99,4 @@ impl LemonLauncher {
 pub enum LemonError {
     #[error("Exit requested")]
     Exit
-}
-
-fn draw_menu(
-    renderer: &mut Renderer,
-    menu: &LemonMenu,
-    options: &LemonMenuConfig
-) -> Result<()> {
-    let region = options.get_rect();
-    let line_height = options.line_height;
-    let justify = &options.justify;
-
-    let rows = region.height() / line_height;
-    let top_rows = options.hover_offset;
-    let bottom_rows = rows - top_rows;
-
-    let mut row_rect = Rect::new(
-        region.x,
-        region.y + (top_rows * line_height) as i32,
-        region.width(),
-        line_height
-    );
-
-    for entry in menu.iter_fwd().take(bottom_rows as usize) {
-        let color = match menu.is_selected(entry) {
-            true => options.hover_color,
-            false => options.text_color
-        };
-
-        renderer.draw_text(&entry.title, color, row_rect, justify)?;
-        row_rect = row_rect.bottom_shifted(line_height as i32);
-    }
-
-    let mut row_rect = Rect::new(
-        region.x,
-        region.y + ((top_rows - 1) * line_height) as i32,
-        region.width(),
-        line_height
-    );
-
-    for entry in menu.iter_rev().take(top_rows as usize) {
-        renderer.draw_text(&entry.title, options.text_color, row_rect, justify)?;
-        row_rect = row_rect.top_shifted(line_height as i32);
-    }
-
-    Ok(())
 }
