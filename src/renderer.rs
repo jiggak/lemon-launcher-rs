@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{cmp::min, path::Path};
 
 use anyhow::{Error, Result};
 use sdl2::{
@@ -28,30 +28,32 @@ impl<'a, 'b> Renderer<'a, 'b> {
         })
     }
 
-    pub fn draw_text<S: Into<String>, C: Into<Color>>(
+    pub fn draw_text<S: AsRef<str>, C: Into<Color>>(
         &mut self,
         text: S,
         color: C,
         dest: Rect,
         justify: &Justify
     ) -> Result<()> {
-        let texture_creator = self.canvas.texture_creator();
-
-        let font_surface = self.font.render(&text.into())
+        let font_surface = self.font.render(text.as_ref())
             .blended(color)?;
+        let texture_creator = self.canvas.texture_creator();
         let font_texture = texture_creator
             .create_texture_from_surface(&font_surface)?;
 
         let TextureQuery { width, height, .. } = font_texture.query();
 
-        let mut font_rect = Rect::new(dest.x, dest.y, width, height);
+        let width = min(width, dest.width());
+
+        let src_rect = Rect::new(0, 0, width, height);
+        let mut dest_rect = Rect::new(dest.x, dest.y, width, height);
         match justify {
-            Justify::Center => font_rect.center_on(dest.center()),
-            Justify::Right => font_rect.offset((dest.width() - width) as i32, 0),
+            Justify::Center => dest_rect.center_on(dest.center()),
+            Justify::Right => dest_rect.offset((dest.width() - width) as i32, 0),
             _ => ()
         };
 
-        self.canvas.copy(&font_texture, None, Some(font_rect))
+        self.canvas.copy(&font_texture, Some(src_rect), Some(dest_rect))
             .map_err(|e| Error::msg(e))
     }
 
