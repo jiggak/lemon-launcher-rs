@@ -2,7 +2,7 @@ use std::path::Path;
 
 use anyhow::Result;
 use fallible_iterator::FallibleIterator;
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, Params};
 
 pub struct RomLibrary {
     db: Connection
@@ -29,13 +29,13 @@ impl RomLibrary {
         Ok(())
     }
 
-    pub fn add_rom(&self, rom: &Rom) -> Result<()> {
-        self.db.execute(
-            "insert into roms (name, title, genre, clone_of) values (?1, ?2, ?3, ?4)",
-            params![rom.name, rom.title, rom.category, rom.clone_of]
-        )?;
-        Ok(())
-    }
+    // pub fn add_rom(&self, rom: &Rom) -> Result<()> {
+    //     self.db.execute(
+    //         "insert into roms (name, title, genre, clone_of) values (?1, ?2, ?3, ?4)",
+    //         params![rom.name, rom.title, rom.category, rom.clone_of]
+    //     )?;
+    //     Ok(())
+    // }
 
     pub fn add_roms(&self, roms: &Vec<&Rom>) -> Result<()> {
         // this magic makes batch insert take seconds vs dozens of minutes
@@ -69,24 +69,45 @@ impl RomLibrary {
         Ok(categories)
     }
 
-    pub fn list_roms(&self, category: &String) -> Result<Vec<Rom>> {
-        let mut stmt = self.db.prepare("
-            select name, title, genre, clone_of
-            from roms
-            where clone_of is null and genre = ?1
-            order by title
-        ")?;
+    fn roms_query<P: Params>(&self, sql: &str, params: P) -> Result<Vec<Rom>> {
+        let mut stmt = self.db.prepare(sql)?;
 
-        let rows = stmt.query([category])?;
+        let rows = stmt.query(params)?;
         let roms = rows
             .map(|r| Ok(Rom {
                 name: r.get(0)?,
                 title: r.get(1)?,
                 category: r.get(2)?,
-                clone_of: r.get(3)?
+                clone_of: None
             }))
             .collect()?;
 
         Ok(roms)
+    }
+
+    pub fn list_roms(&self, category: Option<&String>) -> Result<Vec<Rom>> {
+        self.roms_query("
+            select name, title, genre from roms
+            where clone_of is null and (?1 is null or genre = ?1)
+            order by title
+        ", [category])
+    }
+
+    pub fn list_favourites(&self, count: u32) -> Result<Vec<Rom>> {
+        self.roms_query("
+            select name, title, genre from roms
+            where clone_of is null and favourite = 1
+            order by title
+            limit ?1
+        ", [count])
+    }
+
+    pub fn list_most_played(&self, count: u32) -> Result<Vec<Rom>> {
+        self.roms_query("
+            select name, title, genre from roms
+            where clone_of is null and play_count > 0
+            order by play_count desc, title
+            limit ?1
+        ", [count])
     }
 }

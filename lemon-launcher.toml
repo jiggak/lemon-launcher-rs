@@ -1,4 +1,4 @@
-font_file = "GamePlayed-vYL7.ttf"
+font_file = "PressStart2P-vaV7.ttf"
 font_size = 20
 
 background = "background.png"
@@ -6,8 +6,8 @@ background = "background.png"
 [menu]
 hover_offset = 5
 line_height = 30
-position = { x = 20, y = 0 }
-size = { width = 460, height = 460 }
+position = { x = 25, y = 0 }
+size = { width = 450, height = 460 }
 justify = "center"
 text_color = [0xff, 0xff, 0xff]
 hover_color = [0x23, 0xc1, 0]

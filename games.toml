@@ -1,9 +1,11 @@
 [main]
 name = "Main"
 entries = [
-   { title = "Favourites", action = { query = "roms", params = { favourite = "1" } } },
+   { title = "Most Played", action = { query = "popular", count = 15 } },
+   { title = "Favourites", action = { query = "favourites", count = 15 } },
    { title = "Categories", action = { query = "categories" } },
-   { title = "Fighting Games", action = { query = "roms", params = { genre = "Fighting" } } },
+   { title = "All Games", action = { query = "roms" } },
+   { title = "Fighting Games", action = { query = "roms", genre = "Fighter" } },
    { title = "Shutdown", action = { exec = "sudo shutdown" } },
    { title = "Exit", action = "exit" }
 ]

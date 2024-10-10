@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use anyhow::Result;
 
 use crate::{
@@ -40,8 +38,8 @@ impl LemonMenu {
             MenuEntryAction::BuiltIn(BuiltInAction::Exit) => {
                 Err(LemonError::Exit.into())
             },
-            MenuEntryAction::Query { query, params } => {
-                let entries = exec_query(&query, params)?;
+            MenuEntryAction::Query(query) => {
+                let entries = exec_query(&query)?;
                 Ok(self.set_entries(entries))
             },
             MenuEntryAction::Exec { exec } => {
@@ -85,7 +83,7 @@ impl LemonMenu {
     }
 }
 
-pub fn exec_query(query: &Query, params: Option<HashMap<String, String>>) -> Result<Vec<MenuEntry>> {
+pub fn exec_query(query: &Query) -> Result<Vec<MenuEntry>> {
     let rom_lib = RomLibrary::open("games.sqlite")?;
 
     match query {
@@ -94,26 +92,31 @@ pub fn exec_query(query: &Query, params: Option<HashMap<String, String>>) -> Res
             let entries = categories.iter()
                 .map(|c| MenuEntry {
                     title: c.clone(),
-                    action: MenuEntryAction::Query {
-                        query: Query::Roms,
-                        params: Some(HashMap::from([(String::from("genre"), c.clone())]))
-                    }
+                    action: MenuEntryAction::Query(
+                        Query::Roms { genre: Some(c.clone()) }
+                    )
                 })
                 .collect();
             Ok(entries)
         },
-        Query::Roms => {
-            // FIXME figure out how to pass params to list_roms()
-            let genre = &params.unwrap()["genre"];
-            let roms = rom_lib.list_roms(genre)?;
+        Query::Roms { genre } => {
+            let roms = rom_lib.list_roms(genre.as_ref())?;
             let entries = roms.iter()
-                .map(|r| MenuEntry {
-                    title: r.title.clone(),
-                    action: MenuEntryAction::Rom {
-                        rom: r.name.clone(),
-                        params: None
-                    }
-                })
+                .map(MenuEntry::from)
+                .collect();
+            Ok(entries)
+        },
+        Query::Favourites { count } => {
+            let roms = rom_lib.list_favourites(*count)?;
+            let entries = roms.iter()
+                .map(MenuEntry::from)
+                .collect();
+            Ok(entries)
+        },
+        Query::Popular { count } => {
+            let roms = rom_lib.list_most_played(*count)?;
+            let entries = roms.iter()
+                .map(MenuEntry::from)
                 .collect();
             Ok(entries)
         }

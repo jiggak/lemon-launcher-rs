@@ -2,6 +2,8 @@ use anyhow::Result;
 use serde::Deserialize;
 use std::{collections::HashMap, fs};
 
+use crate::rom_library::Rom;
+
 #[derive(Deserialize)]
 pub struct MenuConfig {
     pub main: Menu,
@@ -28,6 +30,18 @@ pub struct MenuEntry {
     pub action: MenuEntryAction
 }
 
+impl From<&Rom> for MenuEntry {
+    fn from(r: &Rom) -> Self {
+        MenuEntry {
+            title: r.title.clone(),
+            action: MenuEntryAction::Rom {
+                rom: r.name.clone(),
+                params: None
+            }
+        }
+    }
+}
+
 #[derive(Deserialize, Clone, PartialEq)]
 #[serde(untagged)]
 pub enum MenuEntryAction {
@@ -49,10 +63,7 @@ pub enum MenuEntryAction {
         params: Option<String>
     },
     /// Open menu with entries from rom lib query
-    Query {
-        query: Query,
-        params: Option<HashMap<String, String>>
-    }
+    Query(Query)
 }
 
 #[derive(Deserialize, Clone, PartialEq)]
@@ -62,9 +73,20 @@ pub enum BuiltInAction {
 }
 
 #[derive(Deserialize, Clone, PartialEq)]
+#[serde(tag = "query")]
 pub enum Query {
     #[serde(rename="categories")]
     Categories,
     #[serde(rename="roms")]
-    Roms
+    Roms {
+        genre: Option<String>
+    },
+    #[serde(rename="favourites")]
+    Favourites {
+        count: u32
+    },
+    #[serde(rename="popular")]
+    Popular {
+        count: u32
+    }
 }
