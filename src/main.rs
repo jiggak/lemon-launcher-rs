@@ -21,7 +21,11 @@ use renderer::Renderer;
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let config = LemonConfig::load_config("./lemon-launcher.toml")?;
+    if let Some(dir) = cli.data_dir {
+        env::set_data_dir(dir.to_str().unwrap());
+    }
+
+    let config = LemonConfig::load_config(&env::get_config_path())?;
     if let Some(screenshots_dir) = &config.screenshot.dir {
         env::set_screenshots_dir(screenshots_dir);
     }
@@ -59,7 +63,7 @@ fn launch(config: LemonConfig) -> Result<()> {
 
     let mut renderer = Renderer::new(font, window)?;
 
-    let menu_config = MenuConfig::load_config("./games.toml")?;
+    let menu_config = MenuConfig::load_config(env::get_menu_path())?;
     let menu = LemonMenu::new(menu_config);
     let mut app = LemonLauncher::new(config, menu);
 

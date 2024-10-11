@@ -1,6 +1,6 @@
 use anyhow::Result;
 use serde::Deserialize;
-use std::{collections::HashMap, fs, path::PathBuf};
+use std::{collections::HashMap, fs, path::{Path, PathBuf}};
 
 use crate::{env, rom_library::Rom};
 
@@ -11,7 +11,7 @@ pub struct MenuConfig {
 }
 
 impl MenuConfig {
-    pub fn load_config(file_path: &str) -> Result<Self> {
+    pub fn load_config(file_path: impl AsRef<Path>) -> Result<Self> {
         let toml_src = fs::read_to_string(file_path)?;
         let config:MenuConfig = toml::from_str(&toml_src)?;
 

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use sdl2::rect::Rect;
 use serde::Deserialize;
-use std::{fs, path::PathBuf};
+use std::{fs, path::{Path, PathBuf}};
 
 #[derive(Deserialize)]
 pub struct LemonConfig {
@@ -14,7 +14,7 @@ pub struct LemonConfig {
 }
 
 impl LemonConfig {
-    pub fn load_config(file_path: &str) -> Result<Self> {
+    pub fn load_config(file_path: impl AsRef<Path>) -> Result<Self> {
         let toml_src = fs::read_to_string(file_path)?;
         let config:LemonConfig = toml::from_str(&toml_src)?;
 

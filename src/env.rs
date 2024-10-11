@@ -13,6 +13,10 @@ pub fn get_screenshots_dir() -> PathBuf {
     }
 }
 
+pub fn set_data_dir(path: &str) {
+    env::set_var("LL_DATA_HOME", path)
+}
+
 pub fn get_data_dir() -> PathBuf {
     // get data directory resolve order:
     // $LL_DATA_HOME, $XDG_DATA_HOME/lemon-launcher, $HOME/.local/share/lemon-launcher
@@ -42,4 +46,12 @@ fn get_package_name() -> &'static str {
 
 pub fn get_rom_lib_path() -> PathBuf {
     get_data_dir().join("roms.db")
+}
+
+pub fn get_config_path() -> PathBuf {
+    get_data_dir().join("lemon-launcher.toml")
+}
+
+pub fn get_menu_path() -> PathBuf {
+    get_data_dir().join("menu.toml")
 }
