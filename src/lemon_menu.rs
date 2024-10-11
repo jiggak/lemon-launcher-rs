@@ -1,3 +1,5 @@
+use std::process::Command;
+
 use anyhow::Result;
 
 use crate::{
@@ -42,8 +44,8 @@ impl LemonMenu {
                 let entries = exec_query(&query)?;
                 Ok(self.set_entries(entries))
             },
-            MenuEntryAction::Exec { exec } => {
-                panic!("exec action not implemented");
+            MenuEntryAction::Exec { exec, args } => {
+                exec_command(&exec, args.as_ref())
             },
             MenuEntryAction::Rom { rom, params } => {
                 panic!("rom action not implemented");
@@ -121,4 +123,15 @@ pub fn exec_query(query: &Query) -> Result<Vec<MenuEntry>> {
             Ok(entries)
         }
     }
+}
+
+fn exec_command(cmd: &String, args: Option<&Vec<String>>) -> Result<()> {
+    let mut cmd = Command::new(cmd);
+
+    if let Some(args) = args {
+        cmd.args(args);
+    }
+
+    cmd.spawn()?;
+    Ok(())
 }

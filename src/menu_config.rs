@@ -53,7 +53,8 @@ pub enum MenuEntryAction {
     },
     /// Execute shell command
     Exec {
-        exec: String
+        exec: String,
+        args: Option<Vec<String>>
     },
     /// Launch rom using mame
     Rom {
