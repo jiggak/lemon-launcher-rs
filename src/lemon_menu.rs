@@ -26,8 +26,12 @@ impl LemonMenu {
         }
     }
 
+    pub fn selected(&self) -> &MenuEntry {
+        &self.entries[self.index]
+    }
+
     pub fn is_selected(&self, entry: &MenuEntry) -> bool {
-        &self.entries[self.index] == entry
+        self.selected() == entry
     }
 
     pub fn activate(&mut self) -> Result<()> {
@@ -96,7 +100,8 @@ pub fn exec_query(query: &Query) -> Result<Vec<MenuEntry>> {
                     title: c.clone(),
                     action: MenuEntryAction::Query(
                         Query::Roms { genre: Some(c.clone()) }
-                    )
+                    ),
+                    screenshot: None
                 })
                 .collect();
             Ok(entries)

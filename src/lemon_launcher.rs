@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use anyhow::Result;
 use sdl2::{
     event::Event, keyboard::Keycode, pixels::Color, rect::Rect
@@ -41,14 +39,18 @@ impl LemonLauncher {
     }
 
     pub fn draw(&self, renderer: &mut Renderer) -> Result<()> {
-        renderer.draw_background(Color::BLACK);
-        renderer.draw_image(Path::new(&self.config.background))?;
-
+        self.draw_background(renderer)?;
         self.draw_menu(renderer)?;
+        self.draw_screenshot(renderer)?;
 
         renderer.present();
 
         Ok(())
+    }
+
+    fn draw_background(&self, renderer: &mut Renderer) -> Result<()> {
+        renderer.draw_background(Color::BLACK);
+        renderer.draw_image(&self.config.get_background_path(), self.config.get_background_rect())
     }
 
     fn draw_menu(&self, renderer: &mut Renderer) -> Result<()> {
@@ -91,6 +93,14 @@ impl LemonLauncher {
             row_rect = row_rect.top_shifted(line_height as i32);
         }
 
+        Ok(())
+    }
+
+    fn draw_screenshot(&self, renderer: &mut Renderer) -> Result<()> {
+        let region = self.config.screenshot.get_rect();
+        if let Some(screenshot) = &self.menu.selected().screenshot {
+            renderer.draw_image(screenshot, region)?;
+        }
         Ok(())
     }
 }

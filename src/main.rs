@@ -1,4 +1,5 @@
 mod cli;
+mod env;
 mod lemon_config;
 mod lemon_menu;
 mod lemon_launcher;
@@ -21,6 +22,9 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     let config = LemonConfig::load_config("./lemon-launcher.toml")?;
+    if let Some(screenshots_dir) = &config.screenshot.dir {
+        env::set_screenshots_dir(screenshots_dir);
+    }
 
     match cli.command {
         Some(Commands::Scan { mame_xml, genre_ini, roms_dir }) => {
@@ -44,7 +48,7 @@ fn launch(config: LemonConfig) -> Result<()> {
 
     let window = sdl_context.video()
         .map_err(|e| Error::msg(e))?
-        .window("Lemon Launcher", 640, 480)
+        .window("Lemon Launcher", config.size.width, config.size.height)
         .resizable()
         .position_centered()
         .opengl()

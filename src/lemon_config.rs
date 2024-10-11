@@ -1,14 +1,16 @@
 use anyhow::Result;
 use sdl2::rect::Rect;
 use serde::Deserialize;
-use std::fs;
+use std::{fs, path::PathBuf};
 
 #[derive(Deserialize)]
 pub struct LemonConfig {
+    pub size: Size,
     pub font_file: String,
     pub font_size: u16,
     pub background: String,
-    pub menu: LemonMenuConfig
+    pub menu: LemonMenuConfig,
+    pub screenshot: ScreenshotConfig
 }
 
 impl LemonConfig {
@@ -21,6 +23,14 @@ impl LemonConfig {
 
     pub fn get_row_count(&self) -> i32 {
         self.menu.size.height as i32 / self.menu.line_height as i32
+    }
+
+    pub fn get_background_path(&self) -> PathBuf {
+        PathBuf::from(&self.background)
+    }
+
+    pub fn get_background_rect(&self) -> Rect {
+        Rect::new(0, 0, self.size.width, self.size.height)
     }
 }
 
@@ -62,4 +72,17 @@ pub enum Justify {
     Center,
     #[serde(rename = "right")]
     Right
+}
+
+#[derive(Deserialize)]
+pub struct ScreenshotConfig {
+    pub dir: Option<PathBuf>,
+    pub position: Point,
+    pub size: Size
+}
+
+impl ScreenshotConfig {
+    pub fn get_rect(&self) -> Rect {
+        Rect::new(self.position.x, self.position.y, self.size.width, self.size.height)
+    }
 }

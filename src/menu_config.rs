@@ -1,8 +1,8 @@
 use anyhow::Result;
 use serde::Deserialize;
-use std::{collections::HashMap, fs};
+use std::{collections::HashMap, fs, path::PathBuf};
 
-use crate::rom_library::Rom;
+use crate::{env, rom_library::Rom};
 
 #[derive(Deserialize)]
 pub struct MenuConfig {
@@ -27,17 +27,28 @@ pub struct Menu {
 #[derive(Deserialize, Clone, PartialEq)]
 pub struct MenuEntry {
     pub title: String,
-    pub action: MenuEntryAction
+    pub action: MenuEntryAction,
+    pub screenshot: Option<PathBuf>
 }
 
 impl From<&Rom> for MenuEntry {
     fn from(r: &Rom) -> Self {
+        let screenshot = env::get_screenshots_dir()
+            .join(format!("{}.png", r.name));
+
+        let screenshot = if screenshot.exists() {
+            Some(screenshot)
+        } else {
+            None
+        };
+
         MenuEntry {
             title: r.title.clone(),
             action: MenuEntryAction::Rom {
                 rom: r.name.clone(),
                 params: None
-            }
+            },
+            screenshot
         }
     }
 }

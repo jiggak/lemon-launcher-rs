@@ -1,7 +1,12 @@
+size.width = 640
+size.height = 480
+
 font_file = "PressStart2P-vaV7.ttf"
 font_size = 20
 
 background = "background.png"
+
+mame = ["mame", "-rompath", "/run/user/1000/gvfs/smb-share:server=freenas,share=bilbo/Storage/Games/Mame/MAME 0.185 ROMs (non-merged)"]
 
 [menu]
 hover_offset = 5
@@ -11,3 +16,8 @@ size = { width = 450, height = 460 }
 justify = "center"
 text_color = [0xff, 0xff, 0xff]
 hover_color = [0x23, 0xc1, 0]
+
+[screenshot]
+dir = "/run/user/1000/gvfs/smb-share:server=freenas,share=bilbo/Storage/Games/Mame/MAME_0.142_Titles"
+position = { x = 480, y = 10 }
+size = { width = 160, height = 120 }

@@ -57,11 +57,11 @@ impl<'a, 'b> Renderer<'a, 'b> {
             .map_err(|e| Error::msg(e))
     }
 
-    pub fn draw_image(&mut self, img_path: &Path) -> Result<()> {
+    pub fn draw_image(&mut self, img_path: &Path, dest: Rect) -> Result<()> {
         let texture_creator = self.canvas.texture_creator();
         let texture = texture_creator.load_texture(img_path)
             .map_err(|e| Error::msg(e))?;
-        self.canvas.copy(&texture, None, None)
+        self.canvas.copy(&texture, None, dest)
             .map_err(|e| Error::msg(e))
     }
 
