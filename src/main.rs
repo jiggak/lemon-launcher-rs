@@ -22,7 +22,7 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     if let Some(dir) = cli.data_dir {
-        env::set_data_dir(dir.to_str().unwrap());
+        env::set_config_dir(dir.to_str().unwrap());
     }
 
     let config = LemonConfig::load_config(&env::get_config_path())?;
