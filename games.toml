@@ -3,8 +3,8 @@ name = "Main"
 entries = [
    { title = "Most Played", action = { query = "popular", count = 15 }, screenshot = "star.png" },
    { title = "Favourites", action = { query = "favourites", count = 15 } },
-   { title = "Categories", action = { query = "categories" } },
-   { title = "All Games", action = { query = "roms" } },
+   { title = "Categories", action.query = "categories" },
+   { title = "All Games", action.query = "roms" },
    { title = "Fighting Games", action = { query = "roms", genre = "Fighter" } },
    { title = "Shutdown", action = { exec = "sudo", args = ["shutdown"] } },
    { title = "Exit", action = "exit" }
@@ -12,20 +12,20 @@ entries = [
 
 [menus.games]
 entries = [
-   { title = "Fighting Games", action = { menu = "fighting_games" } },
-   { title = "Free Games", action = { menu = "free_games" } },
-   { title = "Puzzle Games", action = { menu = "puzzle_games" } },
-   { title = "Sports Games", action = { menu = "sports_games"  } },
-   { title = "Airplane Games", action = { menu = "airplane_games"  } },
-   { title = "Classic Games", action = { menu = "classic_games"  } },
-   { title = "Maze Games", action = { menu = "maze_games"  } },
-   { title = "War Games", action = { menu = "war_games"  } },
-   { title = "Platform Games", action = { menu = "platform_games"  } }
+   { title = "Fighting Games", action.menu = "fighting_games" },
+   { title = "Free Games", action.menu = "free_games" },
+   { title = "Puzzle Games", action.menu = "puzzle_games" },
+   { title = "Sports Games", action.menu = "sports_games" },
+   { title = "Airplane Games", action.menu = "airplane_games" },
+   { title = "Classic Games", action.menu = "classic_games" },
+   { title = "Maze Games", action.menu = "maze_games" },
+   { title = "War Games", action.menu = "war_games" },
+   { title = "Platform Games", action.menu = "platform_games" }
 ]
 
 [menus.free_games]
 entries = [
-   { action = { rom = "robby" }, title = "Robby Roto" }
+   { action.rom = "robby", title = "Robby Roto" }
 ]
 
 [menus.fighting_games]
