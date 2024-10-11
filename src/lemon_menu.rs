@@ -90,7 +90,7 @@ impl LemonMenu {
 }
 
 pub fn exec_query(query: &Query) -> Result<Vec<MenuEntry>> {
-    let rom_lib = RomLibrary::open("games.sqlite")?;
+    let rom_lib = RomLibrary::open()?;
 
     match query {
         Query::Categories => {

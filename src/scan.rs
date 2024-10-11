@@ -52,7 +52,7 @@ pub fn scan(mame_xml: &Path, genre_ini: &Path, roms_dir: &Path) -> Result<()> {
         }
     }
 
-    let rom_lib = RomLibrary::open("games.sqlite")?;
+    let rom_lib = RomLibrary::open()?;
     rom_lib.clear()?;
     rom_lib.add_roms(&roms)?;
 

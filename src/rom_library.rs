@@ -4,6 +4,8 @@ use anyhow::Result;
 use fallible_iterator::FallibleIterator;
 use rusqlite::{params, Connection, Params};
 
+use crate::env;
+
 pub struct RomLibrary {
     db: Connection
 }
@@ -16,7 +18,11 @@ pub struct Rom {
 }
 
 impl RomLibrary {
-    pub fn open(db_file: impl AsRef<Path>) -> Result<Self> {
+    pub fn open() -> Result<Self> {
+        Self::open_file(env::get_rom_lib_path())
+    }
+
+    pub fn open_file(db_file: impl AsRef<Path>) -> Result<Self> {
         let db = Connection::open(db_file)?;
 
         db.execute(include_str!("roms_table.sql"), ())?;
