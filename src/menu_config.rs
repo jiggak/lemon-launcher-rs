@@ -36,19 +36,13 @@ impl From<&Rom> for MenuEntry {
         let screenshot = env::get_screenshots_dir()
             .join(format!("{}.png", r.name));
 
-        let screenshot = if screenshot.exists() {
-            Some(screenshot)
-        } else {
-            None
-        };
-
         MenuEntry {
             title: r.title.clone(),
             action: MenuEntryAction::Rom {
                 rom: r.name.clone(),
                 params: None
             },
-            screenshot
+            screenshot: Some(screenshot)
         }
     }
 }

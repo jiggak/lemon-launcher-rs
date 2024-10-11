@@ -97,10 +97,13 @@ impl LemonLauncher {
     }
 
     fn draw_screenshot(&self, renderer: &mut Renderer) -> Result<()> {
-        let region = self.config.screenshot.get_rect();
         if let Some(screenshot) = &self.menu.selected().screenshot {
-            renderer.draw_image(screenshot, region)?;
+            if screenshot.exists() {
+                let region = self.config.screenshot.get_rect();
+                renderer.draw_image(screenshot, region)?;
+            }
         }
+
         Ok(())
     }
 }
