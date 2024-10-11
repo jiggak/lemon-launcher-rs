@@ -4,6 +4,7 @@ size.height = 480
 font_file = "PressStart2P-vaV7.ttf"
 font_size = 20
 
+background_colour = [0x00, 0x00, 0x00]
 background = "background.png"
 
 mame = ["mame", "-rompath", "/run/user/1000/gvfs/smb-share:server=freenas,share=bilbo/Storage/Games/Mame/MAME 0.185 ROMs (non-merged)"]

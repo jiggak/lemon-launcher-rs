@@ -26,6 +26,7 @@ fn main() -> Result<()> {
     }
 
     let config = LemonConfig::load_config(&env::get_config_path())?;
+
     if let Some(screenshots_dir) = &config.screenshot.dir {
         env::set_screenshots_dir(screenshots_dir);
     }
@@ -47,7 +48,7 @@ fn launch(config: LemonConfig) -> Result<()> {
     let ttf_context = sdl2::ttf::init()?;
     let _img_context = sdl2::image::init(sdl2::image::InitFlag::PNG | sdl2::image::InitFlag::JPG)
         .map_err(|e| Error::msg(e))?;
-    let font = ttf_context.load_font(&config.font_file, config.font_size)
+    let font = ttf_context.load_font(&config.get_font_path(), config.font_size)
         .map_err(|e| Error::msg(e))?;
 
     let window = sdl_context.video()

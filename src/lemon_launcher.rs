@@ -1,6 +1,6 @@
 use anyhow::Result;
 use sdl2::{
-    event::Event, keyboard::Keycode, pixels::Color, rect::Rect
+    event::Event, keyboard::Keycode, rect::Rect
 };
 
 use crate::{
@@ -49,7 +49,10 @@ impl LemonLauncher {
     }
 
     fn draw_background(&self, renderer: &mut Renderer) -> Result<()> {
-        renderer.draw_background(Color::BLACK);
+        if let Some(bg_colour) = self.config.background_colour {
+            renderer.draw_background(bg_colour);
+        }
+
         renderer.draw_image(&self.config.get_background_path(), self.config.get_background_rect())
     }
 
@@ -101,6 +104,8 @@ impl LemonLauncher {
             if screenshot.exists() {
                 let region = self.config.screenshot.get_rect();
                 renderer.draw_image(screenshot, region)?;
+            } else {
+                println!("Screenshot {:?} not found", screenshot);
             }
         }
 

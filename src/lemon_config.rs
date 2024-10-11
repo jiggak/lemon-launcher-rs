@@ -3,12 +3,15 @@ use sdl2::rect::Rect;
 use serde::Deserialize;
 use std::{fs, path::{Path, PathBuf}};
 
+use crate::env;
+
 #[derive(Deserialize)]
 pub struct LemonConfig {
     pub size: Size,
     pub font_file: String,
     pub font_size: u16,
     pub background: String,
+    pub background_colour: Option<Color>,
     pub menu: LemonMenuConfig,
     pub screenshot: ScreenshotConfig
 }
@@ -26,11 +29,15 @@ impl LemonConfig {
     }
 
     pub fn get_background_path(&self) -> PathBuf {
-        PathBuf::from(&self.background)
+        env::get_config_dir().join(&self.background)
     }
 
     pub fn get_background_rect(&self) -> Rect {
         Rect::new(0, 0, self.size.width, self.size.height)
+    }
+
+    pub fn get_font_path(&self) -> PathBuf {
+        env::get_config_dir().join(&self.font_file)
     }
 }
 
@@ -41,8 +48,8 @@ pub struct LemonMenuConfig {
     pub position: Point,
     pub size: Size,
     pub justify: Justify,
-    pub text_color: (u8, u8, u8),
-    pub hover_color: (u8, u8, u8)
+    pub text_color: Color,
+    pub hover_color: Color
 }
 
 impl LemonMenuConfig {
@@ -50,6 +57,8 @@ impl LemonMenuConfig {
         Rect::new(self.position.x, self.position.y, self.size.width, self.size.height)
     }
 }
+
+pub type Color = (u8, u8, u8);
 
 #[derive(Deserialize)]
 pub struct Point {
