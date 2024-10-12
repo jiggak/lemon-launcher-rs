@@ -3,23 +3,25 @@ use std::process::Command;
 use anyhow::Result;
 
 use crate::{
-    lemon_launcher::LemonError,
+    lemon_config::MameCommand, lemon_launcher::LemonError,
     menu_config::{BuiltInAction, MenuConfig, MenuEntry, MenuEntryAction, Query},
     rom_library::RomLibrary
 };
 
 pub struct LemonMenu {
     config: MenuConfig,
+    mame_cmd: MameCommand,
     entries: Vec<MenuEntry>,
     index: usize,
     history: Vec<(Vec<MenuEntry>, usize)>
 }
 
 impl LemonMenu {
-    pub fn new(config: MenuConfig) -> Self {
+    pub fn new(config: MenuConfig, mame_cmd: MameCommand) -> Self {
         let entries = config.main.entries.clone();
         LemonMenu {
             config,
+            mame_cmd,
             entries,
             index: 0,
             history: vec![]
@@ -52,7 +54,7 @@ impl LemonMenu {
                 exec_command(&exec, args.as_ref())
             },
             MenuEntryAction::Rom { rom, params } => {
-                panic!("rom action not implemented");
+                self.mame_cmd.exec(&rom, params.as_ref())
             }
         }
     }
@@ -89,7 +91,7 @@ impl LemonMenu {
     }
 }
 
-pub fn exec_query(query: &Query) -> Result<Vec<MenuEntry>> {
+fn exec_query(query: &Query) -> Result<Vec<MenuEntry>> {
     let rom_lib = RomLibrary::open()?;
 
     match query {
@@ -138,5 +140,26 @@ fn exec_command(cmd: &String, args: Option<&Vec<String>>) -> Result<()> {
     }
 
     cmd.spawn()?;
+
     Ok(())
+}
+
+impl MameCommand {
+    pub fn exec(&self, rom: &String, rom_params: Option<&String>) -> Result<()> {
+        let mut cmd = Command::new(&self.cmd);
+
+        if let Some(args) = &self.args {
+            cmd.args(args);
+        }
+
+        if let Some(args) = rom_params {
+            cmd.arg(args);
+        }
+
+        cmd.arg(rom);
+
+        cmd.spawn()?;
+
+        Ok(())
+    }
 }

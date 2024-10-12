@@ -8,12 +8,11 @@ use crate::env;
 #[derive(Deserialize)]
 pub struct LemonConfig {
     pub size: Size,
-    pub font_file: String,
-    pub font_size: u16,
-    pub background: String,
-    pub background_colour: Option<Color>,
+    pub font: Option<Font>,
+    pub background: Option<Background>,
     pub menu: LemonMenuConfig,
-    pub screenshot: ScreenshotConfig
+    pub screenshot: ScreenshotConfig,
+    pub mame: MameCommand
 }
 
 impl LemonConfig {
@@ -23,22 +22,36 @@ impl LemonConfig {
 
         Ok(config)
     }
+}
 
-    pub fn get_row_count(&self) -> i32 {
-        self.menu.size.height as i32 / self.menu.line_height as i32
-    }
+#[derive(Deserialize)]
+pub struct Font {
+    pub file: PathBuf,
+    pub size: u16
+}
 
-    pub fn get_background_path(&self) -> PathBuf {
-        env::get_config_dir().join(&self.background)
-    }
-
-    pub fn get_background_rect(&self) -> Rect {
-        Rect::new(0, 0, self.size.width, self.size.height)
-    }
-
+impl Font {
     pub fn get_font_path(&self) -> PathBuf {
-        env::get_config_dir().join(&self.font_file)
+        env::get_config_dir().join(&self.file)
     }
+}
+
+#[derive(Deserialize)]
+pub struct Background {
+    pub image: Option<PathBuf>,
+    pub colour: Option<Color>
+}
+
+impl Background {
+    pub fn get_iamge_path(&self) -> Option<PathBuf> {
+        self.image.as_ref().map(|p| env::get_config_dir().join(p))
+    }
+}
+
+#[derive(Deserialize, Clone)]
+pub struct MameCommand {
+    pub cmd: String,
+    pub args: Option<Vec<String>>
 }
 
 #[derive(Deserialize)]
@@ -56,6 +69,10 @@ impl LemonMenuConfig {
     pub fn get_rect(&self) -> Rect {
         Rect::new(self.position.x, self.position.y, self.size.width, self.size.height)
     }
+
+    pub fn get_row_count(&self) -> i32 {
+        self.size.height as i32 / self.line_height as i32
+    }
 }
 
 pub type Color = (u8, u8, u8);
@@ -72,6 +89,11 @@ pub struct Size {
     pub height: u32
 }
 
+impl Size {
+    pub fn get_rect(&self) -> Rect {
+        Rect::new(0, 0, self.width, self.height)
+    }
+}
 
 #[derive(Deserialize)]
 pub enum Justify {

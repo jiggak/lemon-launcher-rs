@@ -20,7 +20,7 @@ impl LemonLauncher {
     }
 
     pub fn handle_event(&mut self, event: &Event) -> Result<()> {
-        let row_count = self.config.get_row_count();
+        let row_count = self.config.menu.get_row_count();
         match event {
             Event::Quit { .. } => Err(LemonError::Exit.into()),
             Event::KeyDown { keycode: Some(keycode), .. } => {
@@ -49,11 +49,17 @@ impl LemonLauncher {
     }
 
     fn draw_background(&self, renderer: &mut Renderer) -> Result<()> {
-        if let Some(bg_colour) = self.config.background_colour {
-            renderer.draw_background(bg_colour);
+        if let Some(background) = &self.config.background {
+            if let Some(colour) = background.colour {
+                renderer.draw_background(colour);
+            }
+
+            if let Some(image) = background.get_iamge_path() {
+                renderer.draw_image(&image, self.config.size.get_rect())?;
+            }
         }
 
-        renderer.draw_image(&self.config.get_background_path(), self.config.get_background_rect())
+        Ok(())
     }
 
     fn draw_menu(&self, renderer: &mut Renderer) -> Result<()> {

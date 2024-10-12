@@ -45,10 +45,12 @@ fn launch(config: LemonConfig) -> Result<()> {
     let sdl_context = sdl2::init()
         .map_err(|e| Error::msg(e))?;
 
-    let ttf_context = sdl2::ttf::init()?;
     let _img_context = sdl2::image::init(sdl2::image::InitFlag::PNG | sdl2::image::InitFlag::JPG)
         .map_err(|e| Error::msg(e))?;
-    let font = ttf_context.load_font(&config.get_font_path(), config.font_size)
+
+    let ttf_context = sdl2::ttf::init()?;
+    let font_config = config.font.as_ref().unwrap();
+    let font = ttf_context.load_font(&font_config.get_font_path(), font_config.size)
         .map_err(|e| Error::msg(e))?;
 
     let window = sdl_context.video()
@@ -65,7 +67,7 @@ fn launch(config: LemonConfig) -> Result<()> {
     let mut renderer = Renderer::new(font, window)?;
 
     let menu_config = MenuConfig::load_config(env::get_menu_path())?;
-    let menu = LemonMenu::new(menu_config);
+    let menu = LemonMenu::new(menu_config, config.mame.clone());
     let mut app = LemonLauncher::new(config, menu);
 
     let mut event_pump = sdl_context.event_pump()
