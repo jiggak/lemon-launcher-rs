@@ -25,5 +25,10 @@ pub enum Commands {
         mame_xml: PathBuf,
         genre_ini: PathBuf,
         roms_dir: PathBuf
+    },
+
+    /// Make keymap interactively and write to file
+    Keymap {
+        file_path: Option<PathBuf>
     }
 }

@@ -2,7 +2,9 @@ mod cli;
 mod env;
 mod keymap;
 mod lemon_config;
+mod lemon_keymap;
 mod lemon_menu;
+mod lemon_screen;
 mod lemon_launcher;
 mod mame_xml;
 mod menu_config;
@@ -10,13 +12,17 @@ mod renderer;
 mod rom_library;
 mod scan;
 
+use std::path::PathBuf;
+
 use anyhow::{Error, Result};
 use cli::{Cli, Commands, Parser};
 
 use keymap::Keymap;
-use lemon_config::LemonConfig;
+use lemon_config::{Font, LemonConfig, Size};
+use lemon_keymap::LemonKeymap;
 use lemon_launcher::LemonLauncher;
 use lemon_menu::LemonMenu;
+use lemon_screen::LemonScreen;
 use menu_config::MenuConfig;
 use renderer::Renderer;
 
@@ -37,6 +43,9 @@ fn main() -> Result<()> {
         Some(Commands::Scan { mame_xml, genre_ini, roms_dir }) => {
             scan::scan(&mame_xml, &genre_ini, &roms_dir)
         },
+        Some(Commands::Keymap { file_path }) => {
+            launch_keymap(config, file_path.unwrap_or_else(|| env::get_keymap_path()))
+        },
         None | Some(Commands::Launch) => {
             launch(config)
         }
@@ -44,6 +53,24 @@ fn main() -> Result<()> {
 }
 
 fn launch(config: LemonConfig) -> Result<()> {
+    let menu_config = MenuConfig::load_config(env::get_menu_path())?;
+    let menu = LemonMenu::new(menu_config, config.mame.clone());
+    let keymap = Keymap::load(env::get_keymap_path())?;
+
+    let size = config.size.clone();
+    let font = config.font.clone();
+    let app = LemonLauncher::new(config, menu, keymap.into());
+
+    launch_ui(&size, &font, app)
+}
+
+fn launch_keymap(config: LemonConfig, file_path: PathBuf) -> Result<()> {
+    let app = LemonKeymap::new(file_path);
+
+    launch_ui(&config.size, &config.font, app)
+}
+
+fn launch_ui(size: &Size, font: &Font, mut app: impl LemonScreen) -> Result<()> {
     let sdl_context = sdl2::init()
         .map_err(|e| Error::msg(e))?;
 
@@ -51,13 +78,12 @@ fn launch(config: LemonConfig) -> Result<()> {
         .map_err(|e| Error::msg(e))?;
 
     let ttf_context = sdl2::ttf::init()?;
-    let font_config = config.font.as_ref().unwrap();
-    let font = ttf_context.load_font(&font_config.get_font_path(), font_config.size)
+    let font = ttf_context.load_font(&font.get_font_path(), font.size)
         .map_err(|e| Error::msg(e))?;
 
     let window = sdl_context.video()
         .map_err(|e| Error::msg(e))?
-        .window("Lemon Launcher", config.size.width, config.size.height)
+        .window("Lemon Launcher", size.width, size.height)
         .resizable()
         .position_centered()
         .opengl()
@@ -67,11 +93,6 @@ fn launch(config: LemonConfig) -> Result<()> {
         .show_cursor(false);
 
     let mut renderer = Renderer::new(font, window)?;
-
-    let menu_config = MenuConfig::load_config(env::get_menu_path())?;
-    let keymap = Keymap::load(env::get_keymap_path())?;
-    let menu = LemonMenu::new(menu_config, config.mame.clone());
-    let mut app = LemonLauncher::new(config, menu, keymap.into());
 
     let mut event_pump = sdl_context.event_pump()
         .map_err(|e| Error::msg(e))?;

@@ -2,7 +2,7 @@ use std::{collections::HashMap, fs, path::Path};
 
 use anyhow::Result;
 use sdl2::keyboard::Keycode as SdlKeycode;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 pub struct Keymap {
     keymap: ActionToKeycode
@@ -19,6 +19,11 @@ impl Keymap {
         } else {
             Ok(Keymap::default())
         }
+    }
+
+    pub fn save(keymap: &ActionToKeycode, file_path: impl AsRef<Path>) -> Result<()> {
+        let toml_src = toml::to_string(keymap)?;
+        Ok(fs::write(file_path, toml_src)?)
     }
 }
 
@@ -58,7 +63,9 @@ impl From<Keymap> for SdlKeycodeToAction {
     }
 }
 
-#[derive(Deserialize)]
+// Keycodes are integers defined in SDL_KeyCode
+// https://github.com/Rust-SDL2/rust-sdl2/blob/master/sdl2-sys/sdl_bindings.rs#L7659
+#[derive(Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum Keycode {
     Single(i32),
@@ -71,7 +78,7 @@ impl From<SdlKeycode> for Keycode {
     }
 }
 
-#[derive(Deserialize, Eq, PartialEq, Hash, Clone)]
+#[derive(Deserialize, Serialize, Eq, PartialEq, Hash, Clone, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum Action {
     CursorUp,

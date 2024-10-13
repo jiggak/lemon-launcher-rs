@@ -2,8 +2,8 @@ use std::{cmp::min, path::Path};
 
 use anyhow::{Error, Result};
 use sdl2::{
-    image::LoadTexture, pixels::Color, rect::Rect, render::{TextureQuery, WindowCanvas},
-    ttf::Font, video::Window
+    image::LoadTexture, pixels::Color, rect::Rect,
+    render::{TextureQuery, WindowCanvas}, ttf::Font, video::Window
 };
 use crate::lemon_config::Justify;
 

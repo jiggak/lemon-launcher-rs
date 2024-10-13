@@ -8,7 +8,7 @@ use crate::env;
 #[derive(Deserialize)]
 pub struct LemonConfig {
     pub size: Size,
-    pub font: Option<Font>,
+    pub font: Font,
     pub background: Option<Background>,
     pub menu: LemonMenuConfig,
     pub screenshot: ScreenshotConfig,
@@ -24,7 +24,7 @@ impl LemonConfig {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Font {
     pub file: PathBuf,
     pub size: u16
@@ -83,7 +83,7 @@ pub struct Point {
     pub y: i32
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Size {
     pub width: u32,
     pub height: u32

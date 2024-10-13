@@ -1,11 +1,9 @@
 use anyhow::Result;
-use sdl2::{
-    event::Event, rect::Rect
-};
+use sdl2::rect::Rect;
 
 use crate::{
     keymap::{Action, SdlKeycodeToAction}, lemon_config::LemonConfig,
-    lemon_menu::LemonMenu, renderer::Renderer
+    lemon_menu::LemonMenu, lemon_screen::LemonScreen, renderer::Renderer
 };
 
 pub struct LemonLauncher {
@@ -21,21 +19,6 @@ impl LemonLauncher {
         }
     }
 
-    pub fn handle_event(&mut self, event: &Event) -> Result<()> {
-        match event {
-            Event::Quit { .. } => Err(LemonError::Exit.into()),
-            Event::KeyDown { keycode: Some(keycode), .. } => {
-                if let Some(action) = self.keymap.get(keycode) {
-                    // FIXME this clone shouldn't be necessary
-                    self.handle_action(&action.clone())
-                } else {
-                    Ok(())
-                }
-            }
-            _ => Ok(())
-        }
-    }
-
     fn handle_action(&mut self, action: &Action) -> Result<()> {
         let row_count = self.config.menu.get_row_count();
 
@@ -47,16 +30,6 @@ impl LemonLauncher {
             Action::Select => self.menu.activate(),
             Action::Back => Ok(self.menu.back())
         }
-    }
-
-    pub fn draw(&self, renderer: &mut Renderer) -> Result<()> {
-        self.draw_background(renderer)?;
-        self.draw_menu(renderer)?;
-        self.draw_screenshot(renderer)?;
-
-        renderer.present();
-
-        Ok(())
     }
 
     fn draw_background(&self, renderer: &mut Renderer) -> Result<()> {
@@ -127,6 +100,27 @@ impl LemonLauncher {
         }
 
         Ok(())
+    }
+}
+
+impl LemonScreen for LemonLauncher {
+    fn draw(&self, renderer: &mut Renderer) -> Result<()> {
+        self.draw_background(renderer)?;
+        self.draw_menu(renderer)?;
+        self.draw_screenshot(renderer)?;
+
+        renderer.present();
+
+        Ok(())
+    }
+
+    fn handle_keycode(&mut self, keycode: &sdl2::keyboard::Keycode) -> Result<()> {
+        if let Some(action) = self.keymap.get(keycode) {
+            // FIXME this clone shouldn't be necessary
+            self.handle_action(&action.clone())
+        } else {
+            Ok(())
+        }
     }
 }
 
