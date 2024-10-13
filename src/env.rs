@@ -54,3 +54,7 @@ pub fn get_config_path() -> PathBuf {
 pub fn get_menu_path() -> PathBuf {
     get_config_dir().join("menu.toml")
 }
+
+pub fn get_keymap_path() -> PathBuf {
+    get_config_dir().join("keymap.toml")
+}

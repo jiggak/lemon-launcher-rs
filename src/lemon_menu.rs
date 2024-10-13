@@ -37,7 +37,7 @@ impl LemonMenu {
     }
 
     pub fn activate(&mut self) -> Result<()> {
-        let entry = self.entries[self.index].action.clone();
+        let entry = self.selected().action.clone();
         match entry {
             MenuEntryAction::Menu { menu } => {
                 let entries = self.config.menus[&menu].entries.clone();

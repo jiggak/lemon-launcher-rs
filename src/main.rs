@@ -1,5 +1,6 @@
 mod cli;
 mod env;
+mod keymap;
 mod lemon_config;
 mod lemon_menu;
 mod lemon_launcher;
@@ -12,6 +13,7 @@ mod scan;
 use anyhow::{Error, Result};
 use cli::{Cli, Commands, Parser};
 
+use keymap::Keymap;
 use lemon_config::LemonConfig;
 use lemon_launcher::LemonLauncher;
 use lemon_menu::LemonMenu;
@@ -67,8 +69,9 @@ fn launch(config: LemonConfig) -> Result<()> {
     let mut renderer = Renderer::new(font, window)?;
 
     let menu_config = MenuConfig::load_config(env::get_menu_path())?;
+    let keymap = Keymap::load(env::get_keymap_path())?;
     let menu = LemonMenu::new(menu_config, config.mame.clone());
-    let mut app = LemonLauncher::new(config, menu);
+    let mut app = LemonLauncher::new(config, menu, keymap.into());
 
     let mut event_pump = sdl_context.event_pump()
         .map_err(|e| Error::msg(e))?;

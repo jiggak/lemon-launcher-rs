@@ -1,40 +1,51 @@
 use anyhow::Result;
 use sdl2::{
-    event::Event, keyboard::Keycode, rect::Rect
+    event::Event, rect::Rect
 };
 
 use crate::{
-    lemon_config::LemonConfig, lemon_menu::LemonMenu, renderer::Renderer
+    keymap::{Action, SdlKeycodeToAction}, lemon_config::LemonConfig,
+    lemon_menu::LemonMenu, renderer::Renderer
 };
 
 pub struct LemonLauncher {
     config: LemonConfig,
-    menu: LemonMenu
+    menu: LemonMenu,
+    keymap: SdlKeycodeToAction
 }
 
 impl LemonLauncher {
-    pub fn new(config: LemonConfig, menu: LemonMenu) -> Self {
+    pub fn new(config: LemonConfig, menu: LemonMenu, keymap: SdlKeycodeToAction) -> Self {
         LemonLauncher {
-            config, menu
+            config, menu, keymap
         }
     }
 
     pub fn handle_event(&mut self, event: &Event) -> Result<()> {
-        let row_count = self.config.menu.get_row_count();
         match event {
             Event::Quit { .. } => Err(LemonError::Exit.into()),
             Event::KeyDown { keycode: Some(keycode), .. } => {
-                match *keycode {
-                    Keycode::Up => Ok(self.menu.move_cursor(-1)),
-                    Keycode::Left => Ok(self.menu.move_cursor(-row_count)),
-                    Keycode::Down => Ok(self.menu.move_cursor(1)),
-                    Keycode::Right => Ok(self.menu.move_cursor(row_count)),
-                    Keycode::Return => self.menu.activate(),
-                    Keycode::Backspace => Ok(self.menu.back()),
-                    _ => Ok(())
+                if let Some(action) = self.keymap.get(keycode) {
+                    // FIXME this clone shouldn't be necessary
+                    self.handle_action(&action.clone())
+                } else {
+                    Ok(())
                 }
             }
             _ => Ok(())
+        }
+    }
+
+    fn handle_action(&mut self, action: &Action) -> Result<()> {
+        let row_count = self.config.menu.get_row_count();
+
+        match action {
+            Action::CursorUp => Ok(self.menu.move_cursor(-1)),
+            Action::PageUp => Ok(self.menu.move_cursor(-row_count)),
+            Action::CursorDown => Ok(self.menu.move_cursor(1)),
+            Action::PageDown => Ok(self.menu.move_cursor(row_count)),
+            Action::Select => self.menu.activate(),
+            Action::Back => Ok(self.menu.back())
         }
     }
 

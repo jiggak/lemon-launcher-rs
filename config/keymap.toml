@@ -1,0 +1,7 @@
+# https://github.com/Rust-SDL2/rust-sdl2/blob/master/sdl2-sys/sdl_bindings.rs#L7659
+cursor_up = 1073741906 # Up arrow
+cursor_down = 1073741905 # Down arrow
+page_up = 1073741904 # Left arrow
+page_down = 1073741903 # Right arrow
+select = 13 # Enter
+back = [8, 92] # Backspace or Backslash
