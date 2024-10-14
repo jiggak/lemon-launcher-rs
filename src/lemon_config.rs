@@ -95,6 +95,12 @@ impl Size {
     }
 }
 
+impl From<(u32, u32)> for Size {
+    fn from(value: (u32, u32)) -> Self {
+        Size { width: value.0, height: value.1 }
+    }
+}
+
 #[derive(Deserialize)]
 pub enum Justify {
     #[serde(rename = "left")]

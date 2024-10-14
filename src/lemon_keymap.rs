@@ -40,8 +40,10 @@ impl LemonScreen for LemonKeymap {
         let action = self.actions.front().unwrap();
         let text = format!("Press key for {:?}", action);
 
-        // FIXME get these values from config
-        let dest = Rect::new(0, 0, 640, 20);
+        let screen_size = renderer.get_screen_size();
+        let screen_rect = Rect::new(0, 0, screen_size.width, screen_size.height);
+        let dest = Rect::new(0, 0, screen_size.width, renderer.get_font_height() as u32)
+            .centered_on(screen_rect.center());
 
         renderer.draw_text(text, Color::WHITE, dest, &Justify::Center)?;
 

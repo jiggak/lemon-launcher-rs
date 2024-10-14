@@ -5,7 +5,7 @@ use sdl2::{
     image::LoadTexture, pixels::Color, rect::Rect,
     render::{TextureQuery, WindowCanvas}, ttf::Font, video::Window
 };
-use crate::lemon_config::Justify;
+use crate::lemon_config::{Justify, Size};
 
 pub struct Renderer<'a, 'b> {
     font: Font<'a, 'b>,
@@ -26,6 +26,14 @@ impl<'a, 'b> Renderer<'a, 'b> {
         Ok(Renderer {
             font, canvas
         })
+    }
+
+    pub fn get_screen_size(&self) -> Size {
+        self.canvas.logical_size().into()
+    }
+
+    pub fn get_font_height(&self) -> i32 {
+        self.font.height()
     }
 
     pub fn draw_text<S: AsRef<str>, C: Into<Color>>(
