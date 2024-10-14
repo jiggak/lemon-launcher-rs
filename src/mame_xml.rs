@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fs::File, io::BufReader, path::Path};
 
-use anyhow::{Error, Ok, Result};
-use quick_xml::{de::from_reader, events::{BytesStart, Event}, Reader};
+use anyhow::Result;
+use quick_xml::de::from_reader;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -28,6 +28,7 @@ impl Mame {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 pub struct Machine {
     #[serde(rename="@name")]
@@ -52,6 +53,7 @@ pub struct Machine {
     pub manufacturer: Option<String>
 }
 
+/* This is slightly faster than using serde
 impl Machine {
     pub fn load_xml(xml_path: impl AsRef<Path>) -> Result<HashMap<String, Machine>> {
         let mut reader = Reader::from_file(xml_path)?;
@@ -133,4 +135,4 @@ impl Machine {
             }
         })
     }
-}
+} */
