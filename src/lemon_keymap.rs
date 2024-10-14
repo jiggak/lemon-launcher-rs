@@ -5,7 +5,7 @@ use sdl2::{keyboard::Keycode, pixels::Color, rect::Rect};
 
 use crate::{
     keymap::{Action, ActionToKeycode, Keymap}, lemon_config::Justify,
-    lemon_launcher::LemonError, lemon_screen::LemonScreen, renderer::Renderer
+    lemon_screen::{EventReply, LemonScreen}, renderer::Renderer
 };
 
 pub struct LemonKeymap {
@@ -52,7 +52,7 @@ impl LemonScreen for LemonKeymap {
         Ok(())
     }
 
-    fn handle_keycode(&mut self, keycode: &Keycode) -> Result<()> {
+    fn handle_keycode(&mut self, keycode: &Keycode) -> Result<EventReply> {
         let action = self.actions.pop_front().unwrap();
         self.keymap.insert(action, (*keycode).into());
 
@@ -60,9 +60,9 @@ impl LemonScreen for LemonKeymap {
             Keymap::save(&self.keymap, &self.file_path)?;
             println!("Saved keymap to {:?}", self.file_path);
 
-            Err(LemonError::Exit.into())
+            Ok(EventReply::Exit)
         } else {
-            Ok(())
+            Ok(EventReply::Handled)
         }
     }
 }

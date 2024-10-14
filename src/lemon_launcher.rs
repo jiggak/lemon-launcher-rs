@@ -1,9 +1,9 @@
 use anyhow::Result;
-use sdl2::rect::Rect;
+use sdl2::{keyboard::Keycode, rect::Rect};
 
 use crate::{
     keymap::{Action, SdlKeycodeToAction}, lemon_config::LemonConfig,
-    lemon_menu::LemonMenu, lemon_screen::LemonScreen, renderer::Renderer
+    lemon_menu::LemonMenu, lemon_screen::{EventReply, LemonScreen}, renderer::Renderer
 };
 
 pub struct LemonLauncher {
@@ -19,17 +19,19 @@ impl LemonLauncher {
         }
     }
 
-    fn handle_action(&mut self, action: &Action) -> Result<()> {
+    fn handle_action(&mut self, action: &Action) -> Result<EventReply> {
         let row_count = self.config.menu.get_row_count();
 
         match action {
-            Action::CursorUp => Ok(self.menu.move_cursor(-1)),
-            Action::PageUp => Ok(self.menu.move_cursor(-row_count)),
-            Action::CursorDown => Ok(self.menu.move_cursor(1)),
-            Action::PageDown => Ok(self.menu.move_cursor(row_count)),
-            Action::Select => self.menu.activate(),
-            Action::Back => Ok(self.menu.back())
+            Action::CursorUp => self.menu.move_cursor(-1),
+            Action::PageUp => self.menu.move_cursor(-row_count),
+            Action::CursorDown => self.menu.move_cursor(1),
+            Action::PageDown => self.menu.move_cursor(row_count),
+            Action::Select => return self.menu.activate(),
+            Action::Back => self.menu.back(),
         }
+
+        Ok(EventReply::Handled)
     }
 
     fn draw_background(&self, renderer: &mut Renderer) -> Result<()> {
@@ -114,18 +116,12 @@ impl LemonScreen for LemonLauncher {
         Ok(())
     }
 
-    fn handle_keycode(&mut self, keycode: &sdl2::keyboard::Keycode) -> Result<()> {
+    fn handle_keycode(&mut self, keycode: &Keycode) -> Result<EventReply> {
         if let Some(action) = self.keymap.get(keycode) {
             // FIXME this clone shouldn't be necessary
             self.handle_action(&action.clone())
         } else {
-            Ok(())
+            Ok(EventReply::Unhandled)
         }
     }
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum LemonError {
-    #[error("Exit requested")]
-    Exit
 }

@@ -12,5 +12,4 @@ quick-xml = { version = "0.36.2", features = ["serialize"] }
 rusqlite = "0.32.1"
 sdl2 = { version = "0.37.0", features = ["image", "ttf"] }
 serde = { version = "1.0.210", features = ["derive"] }
-thiserror = "1.0.64"
 toml = "0.8.19"

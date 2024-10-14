@@ -1,9 +1,9 @@
-use std::process::Command;
+use std::{io, process::Command};
 
 use anyhow::Result;
 
 use crate::{
-    lemon_config::MameCommand, lemon_launcher::LemonError,
+    lemon_config::MameCommand, lemon_screen::EventReply,
     menu_config::{BuiltInAction, MenuConfig, MenuEntry, MenuEntryAction, Query},
     rom_library::RomLibrary
 };
@@ -36,27 +36,29 @@ impl LemonMenu {
         self.selected() == entry
     }
 
-    pub fn activate(&mut self) -> Result<()> {
+    pub fn activate(&mut self) -> Result<EventReply> {
         let entry = self.selected().action.clone();
         match entry {
             MenuEntryAction::Menu { menu } => {
                 let entries = self.config.menus[&menu].entries.clone();
-                Ok(self.set_entries(entries))
+                self.set_entries(entries)
             },
             MenuEntryAction::BuiltIn(BuiltInAction::Exit) => {
-                Err(LemonError::Exit.into())
+                return Ok(EventReply::Exit)
             },
             MenuEntryAction::Query(query) => {
                 let entries = exec_query(&query)?;
-                Ok(self.set_entries(entries))
+                self.set_entries(entries)
             },
             MenuEntryAction::Exec { exec, args } => {
-                exec_command(&exec, args.as_ref())
+                exec_command(&exec, args.as_ref())?
             },
             MenuEntryAction::Rom { rom, params } => {
-                self.mame_cmd.exec(&rom, params.as_ref())
+                self.mame_cmd.exec(&rom, params.as_ref())?
             }
         }
+
+        Ok(EventReply::Handled)
     }
 
     fn set_entries(&mut self, entries: Vec<MenuEntry>) {
@@ -132,7 +134,7 @@ fn exec_query(query: &Query) -> Result<Vec<MenuEntry>> {
     }
 }
 
-fn exec_command(cmd: &String, args: Option<&Vec<String>>) -> Result<()> {
+fn exec_command(cmd: &String, args: Option<&Vec<String>>) -> io::Result<()> {
     let mut cmd = Command::new(cmd);
 
     if let Some(args) = args {
@@ -145,7 +147,7 @@ fn exec_command(cmd: &String, args: Option<&Vec<String>>) -> Result<()> {
 }
 
 impl MameCommand {
-    pub fn exec(&self, rom: &String, rom_params: Option<&String>) -> Result<()> {
+    pub fn exec(&self, rom: &String, rom_params: Option<&String>) -> io::Result<()> {
         let mut cmd = Command::new(&self.cmd);
 
         if let Some(args) = &self.args {

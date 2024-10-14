@@ -22,7 +22,7 @@ use lemon_config::{Font, LemonConfig, Size};
 use lemon_keymap::LemonKeymap;
 use lemon_launcher::LemonLauncher;
 use lemon_menu::LemonMenu;
-use lemon_screen::LemonScreen;
+use lemon_screen::{EventReply, LemonScreen};
 use menu_config::MenuConfig;
 use renderer::Renderer;
 
@@ -100,7 +100,7 @@ fn launch_ui(size: &Size, font: &Font, mut app: impl LemonScreen) -> Result<()> 
     loop {
         let event = event_pump.wait_event();
         match app.handle_event(&event) {
-            // Err(LemonError::Exit) => break,
+            Ok(EventReply::Exit) => break,
             Err(e) => return Err(e),
             _ => ()
         }
