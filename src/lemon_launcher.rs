@@ -29,6 +29,7 @@ impl LemonLauncher {
             Action::PageDown => self.menu.move_cursor(row_count),
             Action::Select => return self.menu.activate(),
             Action::Back => self.menu.back(),
+            Action::Favourite => self.menu.toggle_favourite()?
         }
 
         Ok(EventReply::Handled)

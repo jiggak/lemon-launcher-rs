@@ -22,7 +22,8 @@ impl LemonKeymap {
             Action::PageUp,
             Action::PageDown,
             Action::Select,
-            Action::Back
+            Action::Back,
+            Action::Favourite
         ];
 
         Self {

@@ -66,6 +66,22 @@ impl RomLibrary {
         Ok(())
     }
 
+    pub fn inc_play_count(&self, rom_name: &String) -> Result<()> {
+        self.db.execute("
+            update roms set play_count = play_count + 1
+            where name = ?1
+        ", [rom_name])?;
+        Ok(())
+    }
+
+    pub fn toggle_favourite(&self, rom_name: &String) -> Result<()> {
+        self.db.execute("
+            update roms set favourite = not favourite
+            where name = ?1
+        ", [rom_name])?;
+        Ok(())
+    }
+
     pub fn list_categories(&self) -> Result<Vec<String>> {
         let mut stmt = self.db.prepare("select genre from roms where clone_of is null group by genre")?;
         let rows = stmt.query([])?;

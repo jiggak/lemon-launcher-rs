@@ -36,7 +36,8 @@ impl Default for Keymap {
                 (Action::PageUp, SdlKeycode::Left.into()),
                 (Action::PageDown, SdlKeycode::Right.into()),
                 (Action::Select, SdlKeycode::Return.into()),
-                (Action::Back, SdlKeycode::Backspace.into())
+                (Action::Back, SdlKeycode::Backspace.into()),
+                (Action::Favourite, SdlKeycode::F.into())
             ])
         }
     }
@@ -86,5 +87,6 @@ pub enum Action {
     PageUp,
     PageDown,
     Select,
-    Back
+    Back,
+    Favourite
 }

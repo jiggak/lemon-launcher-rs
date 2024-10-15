@@ -54,11 +54,23 @@ impl LemonMenu {
                 exec_command(&exec, args.as_ref())?
             },
             MenuEntryAction::Rom { rom, params } => {
+                let rom_lib = RomLibrary::open()?;
+                rom_lib.inc_play_count(&rom)?;
+
                 self.mame_cmd.exec(&rom, params.as_ref())?
             }
         }
 
         Ok(EventReply::Handled)
+    }
+
+    pub fn toggle_favourite(&self) -> Result<()> {
+        if let MenuEntryAction::Rom { rom, .. } = &self.selected().action {
+            let rom_lib = RomLibrary::open()?;
+            rom_lib.toggle_favourite(&rom)?;
+        }
+
+        Ok(())
     }
 
     fn set_entries(&mut self, entries: Vec<MenuEntry>) {
