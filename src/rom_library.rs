@@ -14,7 +14,10 @@ pub struct Rom {
     pub name: String,
     pub title: String,
     pub category: String,
-    pub clone_of: Option<String>
+    pub clone_of: Option<String>,
+    pub is_favourite: bool,
+    pub year: Option<String>,
+    pub manufacturer: Option<String>
 }
 
 impl RomLibrary {
@@ -55,12 +58,19 @@ impl RomLibrary {
         ")?;
 
         let mut stmt = self.db.prepare("
-            insert into roms (name, title, genre, clone_of)
-            values (?1, ?2, ?3, ?4)
+            insert into roms (name, title, genre, clone_of, year, manufacturer)
+            values (?1, ?2, ?3, ?4, ?5, ?6)
         ")?;
 
         for rom in roms {
-            stmt.execute(params![rom.name, rom.title, rom.category, rom.clone_of])?;
+            stmt.execute(params![
+                rom.name,
+                rom.title,
+                rom.category,
+                rom.clone_of,
+                rom.year,
+                rom.manufacturer
+            ])?;
         }
 
         Ok(())
@@ -83,7 +93,9 @@ impl RomLibrary {
     }
 
     pub fn list_categories(&self) -> Result<Vec<String>> {
-        let mut stmt = self.db.prepare("select genre from roms where clone_of is null group by genre")?;
+        let mut stmt = self.db.prepare(
+            "select genre from roms where clone_of is null group by genre"
+        )?;
         let rows = stmt.query([])?;
         let categories = rows
             .map(|r| r.get(0))
@@ -92,7 +104,12 @@ impl RomLibrary {
     }
 
     fn roms_query<P: Params>(&self, sql: &str, params: P) -> Result<Vec<Rom>> {
-        let mut stmt = self.db.prepare(sql)?;
+        let sql = format!(
+            "select name, title, genre, favourite, year, manufacturer from roms {}",
+            sql
+        );
+
+        let mut stmt = self.db.prepare(&sql)?;
 
         let rows = stmt.query(params)?;
         let roms = rows
@@ -100,7 +117,10 @@ impl RomLibrary {
                 name: r.get(0)?,
                 title: r.get(1)?,
                 category: r.get(2)?,
-                clone_of: None
+                clone_of: None,
+                is_favourite: r.get(3)?,
+                year: r.get(4)?,
+                manufacturer: r.get(5)?
             }))
             .collect()?;
 
@@ -109,7 +129,6 @@ impl RomLibrary {
 
     pub fn list_roms(&self, category: Option<&String>) -> Result<Vec<Rom>> {
         self.roms_query("
-            select name, title, genre from roms
             where clone_of is null and (?1 is null or genre = ?1)
             order by title
         ", [category])
@@ -117,7 +136,6 @@ impl RomLibrary {
 
     pub fn list_favourites(&self, count: u32) -> Result<Vec<Rom>> {
         self.roms_query("
-            select name, title, genre from roms
             where clone_of is null and favourite = 1
             order by title
             limit ?1
@@ -126,7 +144,6 @@ impl RomLibrary {
 
     pub fn list_most_played(&self, count: u32) -> Result<Vec<Rom>> {
         self.roms_query("
-            select name, title, genre from roms
             where clone_of is null and play_count > 0
             order by play_count desc, title
             limit ?1

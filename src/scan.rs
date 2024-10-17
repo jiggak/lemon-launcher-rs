@@ -22,7 +22,10 @@ pub fn scan(mame_xml: &Path, genre_ini: &Path, roms_dir: &Path) -> Result<()> {
                     name: rom.clone(),
                     title: machine.description.clone(),
                     category: category.clone(),
-                    clone_of: machine.clone_of.clone()
+                    clone_of: machine.clone_of.clone(),
+                    is_favourite: false,
+                    year: machine.year.clone(),
+                    manufacturer: machine.manufacturer.clone()
                 });
             } else {
                 println!("Title for rom {rom} not found");

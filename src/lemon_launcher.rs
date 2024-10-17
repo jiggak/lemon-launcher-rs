@@ -2,8 +2,11 @@ use anyhow::Result;
 use sdl2::{keyboard::Keycode, rect::Rect};
 
 use crate::{
-    keymap::{Action, SdlKeycodeToAction}, lemon_config::LemonConfig,
-    lemon_menu::LemonMenu, lemon_screen::{EventReply, LemonScreen}, renderer::Renderer
+    env, keymap::{Action, SdlKeycodeToAction},
+    lemon_config::{LemonConfig, WidgetContent, WidgetKey},
+    lemon_menu::LemonMenu,
+    lemon_screen::{EventReply, LemonScreen},
+    renderer::Renderer
 };
 
 pub struct LemonLauncher {
@@ -104,6 +107,56 @@ impl LemonLauncher {
 
         Ok(())
     }
+
+    fn draw_widgets(&self, renderer: &mut Renderer) -> Result<()> {
+        let item = self.menu.selected();
+        let item_detail = if let Some(details) = &item.details {
+            details
+        } else {
+            return Ok(());
+        };
+
+        let is_fav = if item_detail.is_favourite { "Y" } else { "N" };
+
+        for (key, widget) in &self.config.widgets {
+            match &widget.content {
+                WidgetContent::Text(content) => {
+                    let text = match key {
+                        WidgetKey::Favourite => is_fav,
+                        WidgetKey::Year => &item_detail.year,
+                        WidgetKey::Manufacturer => &item_detail.manufacturer
+                    };
+                    let text = content.replace("{}", text);
+
+                    let color = widget.text_color;
+                    let justify = &widget.justify;
+                    let dest = widget.get_rect();
+
+                    renderer.draw_text(text, color, dest, justify)?;
+                },
+                WidgetContent::Image { image_path } => {
+                    let image_path = match key {
+                        WidgetKey::Favourite => {
+                            if item_detail.is_favourite {
+                                Some(image_path)
+                            } else {
+                                None
+                            }
+                        },
+                        _ => Some(image_path)
+                    };
+
+                    if let Some(image_path) = image_path {
+                        let image_path = env::get_config_dir().join(image_path);
+                        let dest = widget.get_rect();
+                        renderer.draw_image(&image_path, dest)?;
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl LemonScreen for LemonLauncher {
@@ -111,6 +164,7 @@ impl LemonScreen for LemonLauncher {
         self.draw_background(renderer)?;
         self.draw_menu(renderer)?;
         self.draw_screenshot(renderer)?;
+        self.draw_widgets(renderer)?;
 
         renderer.present();
 

@@ -28,7 +28,8 @@ pub struct Menu {
 pub struct MenuEntry {
     pub title: String,
     pub action: MenuEntryAction,
-    pub screenshot: Option<PathBuf>
+    pub screenshot: Option<PathBuf>,
+    pub details: Option<MenuEntryDetail>
 }
 
 impl From<&Rom> for MenuEntry {
@@ -42,7 +43,12 @@ impl From<&Rom> for MenuEntry {
                 rom: r.name.clone(),
                 params: None
             },
-            screenshot: Some(screenshot)
+            screenshot: Some(screenshot),
+            details: Some(MenuEntryDetail {
+                is_favourite: r.is_favourite,
+                year: r.year.clone().unwrap_or_default(),
+                manufacturer: r.manufacturer.clone().unwrap_or_default()
+            })
         }
     }
 }
@@ -95,4 +101,11 @@ pub enum Query {
     Popular {
         count: u32
     }
+}
+
+#[derive(Deserialize, Clone, PartialEq)]
+pub struct MenuEntryDetail {
+    pub is_favourite: bool,
+    pub year: String,
+    pub manufacturer: String
 }

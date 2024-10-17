@@ -1,7 +1,7 @@
 use anyhow::Result;
 use sdl2::rect::Rect;
 use serde::Deserialize;
-use std::{fs, path::{Path, PathBuf}};
+use std::{collections::HashMap, fs, path::{Path, PathBuf}};
 
 use crate::env;
 
@@ -12,7 +12,8 @@ pub struct LemonConfig {
     pub background: Option<Background>,
     pub menu: LemonMenuConfig,
     pub screenshot: ScreenshotConfig,
-    pub mame: MameCommand
+    pub mame: MameCommand,
+    pub widgets: HashMap<WidgetKey, Widget>
 }
 
 impl LemonConfig {
@@ -75,6 +76,10 @@ impl LemonMenuConfig {
     }
 }
 
+fn default_text_colour() -> (u8, u8, u8) {
+    (0xff, 0xff, 0xff)
+}
+
 pub type Color = (u8, u8, u8);
 
 #[derive(Deserialize)]
@@ -111,6 +116,10 @@ pub enum Justify {
     Right
 }
 
+impl Default for Justify {
+    fn default() -> Self { Justify::Left }
+}
+
 #[derive(Deserialize)]
 pub struct ScreenshotConfig {
     pub dir: Option<PathBuf>,
@@ -121,5 +130,50 @@ pub struct ScreenshotConfig {
 impl ScreenshotConfig {
     pub fn get_rect(&self) -> Rect {
         Rect::new(self.position.x, self.position.y, self.size.width, self.size.height)
+    }
+}
+
+#[derive(Deserialize, PartialEq, Eq, Hash)]
+pub enum WidgetKey {
+    #[serde(rename = "favourite")]
+    Favourite,
+    #[serde(rename = "year")]
+    Year,
+    #[serde(rename = "manufacturer")]
+    Manufacturer
+}
+
+
+#[derive(Deserialize)]
+pub struct Widget {
+    pub position: Point,
+    pub size: Size,
+    #[serde(default = "default_text_colour")]
+    pub text_color: Color,
+    #[serde(default)]
+    pub justify: Justify,
+    #[serde(default)]
+    pub content: WidgetContent
+}
+
+impl Widget {
+    pub fn get_rect(&self) -> Rect {
+        Rect::new(self.position.x, self.position.y, self.size.width, self.size.height)
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+pub enum WidgetContent {
+    Text(String),
+    Image {
+        #[serde(rename = "image")]
+        image_path: PathBuf
+    }
+}
+
+impl Default for WidgetContent {
+    fn default() -> Self {
+        WidgetContent::Text("{}".into())
     }
 }

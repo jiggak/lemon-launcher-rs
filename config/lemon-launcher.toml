@@ -8,18 +8,37 @@ background.image = "background.png"
 background.colour = [0x00, 0x00, 0x00]
 
 mame.cmd = "mame"
-mame.args = ["-rompath", "/run/user/1000/gvfs/smb-share:server=freenas,share=bilbo/Storage/Games/Mame/MAME 0.185 ROMs (non-merged)"]
+mame.args = [
+   "-rompath",
+   "/run/user/1000/gvfs/smb-share:server=freenas,share=bilbo/Storage/Games/Mame/MAME 0.185 ROMs (non-merged)"
+]
 
 [menu]
-hover_offset = 5
-line_height = 30
 position = { x = 25, y = 0 }
 size = { width = 450, height = 460 }
+hover_offset = 5
+line_height = 30
 justify = "center"
 text_color = [0xff, 0xff, 0xff]
 hover_color = [0x23, 0xc1, 0]
 
 [screenshot]
-dir = "/run/user/1000/gvfs/smb-share:server=freenas,share=bilbo/Storage/Games/Mame/MAME_0.142_Titles"
 position = { x = 480, y = 10 }
 size = { width = 160, height = 120 }
+dir = "/run/user/1000/gvfs/smb-share:server=freenas,share=bilbo/Storage/Games/Mame/MAME_0.142_Titles"
+
+[widgets.favourite]
+position = { x = 600, y = 10 }
+size = { width = 30, height = 30 }
+content = { image = "star.png" }
+
+[widgets.year]
+position = { x = 480, y = 460 }
+size = { width = 160, height = 20 }
+
+[widgets.manufacturer]
+position = { x = 20, y = 460 }
+size = { width = 460, height = 20 }
+content = "{}"
+justify = "center"
+text_color = [0xe1, 0xdd, 0x14]

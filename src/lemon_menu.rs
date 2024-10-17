@@ -47,7 +47,7 @@ impl LemonMenu {
                 return Ok(EventReply::Exit)
             },
             MenuEntryAction::Query(query) => {
-                let entries = exec_query(&query)?;
+                let entries = query.exec()?;
                 self.set_entries(entries)
             },
             MenuEntryAction::Exec { exec, args } => {
@@ -64,10 +64,11 @@ impl LemonMenu {
         Ok(EventReply::Handled)
     }
 
-    pub fn toggle_favourite(&self) -> Result<()> {
+    pub fn toggle_favourite(&mut self) -> Result<()> {
         if let MenuEntryAction::Rom { rom, .. } = &self.selected().action {
             let rom_lib = RomLibrary::open()?;
             rom_lib.toggle_favourite(&rom)?;
+            self.refresh()?;
         }
 
         Ok(())
@@ -77,6 +78,16 @@ impl LemonMenu {
         self.history.push((self.entries.clone(), self.index));
         self.entries = entries;
         self.index = 0;
+    }
+
+    fn refresh(&mut self) -> Result<()> {
+        if let Some((entries, index)) = self.history.last() {
+            if let MenuEntryAction::Query(query) = &entries[*index].action {
+                self.entries = query.exec()?;
+            }
+        }
+
+        Ok(())
     }
 
     pub fn back(&mut self) {
@@ -105,43 +116,46 @@ impl LemonMenu {
     }
 }
 
-fn exec_query(query: &Query) -> Result<Vec<MenuEntry>> {
-    let rom_lib = RomLibrary::open()?;
+impl Query {
+    pub fn exec(&self) -> Result<Vec<MenuEntry>> {
+        let rom_lib = RomLibrary::open()?;
 
-    match query {
-        Query::Categories => {
-            let categories = rom_lib.list_categories()?;
-            let entries = categories.iter()
-                .map(|c| MenuEntry {
-                    title: c.clone(),
-                    action: MenuEntryAction::Query(
-                        Query::Roms { genre: Some(c.clone()) }
-                    ),
-                    screenshot: None
-                })
-                .collect();
-            Ok(entries)
-        },
-        Query::Roms { genre } => {
-            let roms = rom_lib.list_roms(genre.as_ref())?;
-            let entries = roms.iter()
-                .map(MenuEntry::from)
-                .collect();
-            Ok(entries)
-        },
-        Query::Favourites { count } => {
-            let roms = rom_lib.list_favourites(*count)?;
-            let entries = roms.iter()
-                .map(MenuEntry::from)
-                .collect();
-            Ok(entries)
-        },
-        Query::Popular { count } => {
-            let roms = rom_lib.list_most_played(*count)?;
-            let entries = roms.iter()
-                .map(MenuEntry::from)
-                .collect();
-            Ok(entries)
+        match self {
+            Query::Categories => {
+                let categories = rom_lib.list_categories()?;
+                let entries = categories.iter()
+                    .map(|c| MenuEntry {
+                        title: c.clone(),
+                        action: MenuEntryAction::Query(
+                            Query::Roms { genre: Some(c.clone()) }
+                        ),
+                        screenshot: None,
+                        details: None
+                    })
+                    .collect();
+                Ok(entries)
+            },
+            Query::Roms { genre } => {
+                let roms = rom_lib.list_roms(genre.as_ref())?;
+                let entries = roms.iter()
+                    .map(MenuEntry::from)
+                    .collect();
+                Ok(entries)
+            },
+            Query::Favourites { count } => {
+                let roms = rom_lib.list_favourites(*count)?;
+                let entries = roms.iter()
+                    .map(MenuEntry::from)
+                    .collect();
+                Ok(entries)
+            },
+            Query::Popular { count } => {
+                let roms = rom_lib.list_most_played(*count)?;
+                let entries = roms.iter()
+                    .map(MenuEntry::from)
+                    .collect();
+                Ok(entries)
+            }
         }
     }
 }
