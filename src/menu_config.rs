@@ -34,8 +34,7 @@ pub struct MenuEntry {
 
 impl From<&Rom> for MenuEntry {
     fn from(r: &Rom) -> Self {
-        let screenshot = env::get_screenshots_dir()
-            .join(format!("{}.png", r.name));
+        let screenshot = env::get_screenshot_file_path(format!("{}.png", r.name));
 
         MenuEntry {
             title: r.title.clone(),

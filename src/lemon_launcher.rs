@@ -147,7 +147,7 @@ impl LemonLauncher {
                     };
 
                     if let Some(image_path) = image_path {
-                        let image_path = env::get_config_dir().join(image_path);
+                        let image_path = env::get_config_file_path(image_path);
                         let dest = widget.get_rect();
                         renderer.draw_image(&image_path, dest)?;
                     }

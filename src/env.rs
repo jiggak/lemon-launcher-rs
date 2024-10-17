@@ -4,20 +4,22 @@ pub fn set_screenshots_dir(path: impl AsRef<Path>) {
     env::set_var("LL_SCREENSHOTS_DIR", path.as_ref().as_os_str())
 }
 
-pub fn get_screenshots_dir() -> PathBuf {
-    match env::var("LL_SCREENSHOTS_DIR") {
+pub fn get_screenshot_file_path(file_name: impl AsRef<Path>) -> PathBuf {
+    let screenshot_dir = match env::var("LL_SCREENSHOTS_DIR") {
         Ok(var) => PathBuf::from(var),
         Err(_) => {
             get_config_dir().join("screenshots")
         }
-    }
+    };
+
+    screenshot_dir.join(file_name)
 }
 
 pub fn set_config_dir(path: &str) {
     env::set_var("LL_CONFIG_HOME", path)
 }
 
-pub fn get_config_dir() -> PathBuf {
+fn get_config_dir() -> PathBuf {
     // get data directory resolve order:
     // $LL_CONFIG_HOME, $XDG_CONFIG_HOME/lemon-launcher, $HOME/.config/lemon-launcher
     match env::var("LL_CONFIG_HOME") {
@@ -39,22 +41,27 @@ pub fn get_config_dir() -> PathBuf {
     }
 }
 
+/// Get path of file relative to the config dir
+pub fn get_config_file_path(file: impl AsRef<Path>) -> PathBuf {
+    get_config_dir().join(file)
+}
+
 fn get_package_name() -> &'static str {
     env!("CARGO_PKG_NAME")
 }
 
 pub fn get_rom_lib_path() -> PathBuf {
-    get_config_dir().join("roms.db")
+    get_config_file_path("roms.db")
 }
 
 pub fn get_config_path() -> PathBuf {
-    get_config_dir().join("lemon-launcher.toml")
+    get_config_file_path("lemon-launcher.toml")
 }
 
 pub fn get_menu_path() -> PathBuf {
-    get_config_dir().join("menu.toml")
+    get_config_file_path("menu.toml")
 }
 
 pub fn get_keymap_path() -> PathBuf {
-    get_config_dir().join("keymap.toml")
+    get_config_file_path("keymap.toml")
 }

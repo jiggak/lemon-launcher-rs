@@ -33,7 +33,7 @@ pub struct Font {
 
 impl Font {
     pub fn get_font_path(&self) -> PathBuf {
-        env::get_config_dir().join(&self.file)
+        env::get_config_file_path(&self.file)
     }
 }
 
@@ -45,7 +45,7 @@ pub struct Background {
 
 impl Background {
     pub fn get_iamge_path(&self) -> Option<PathBuf> {
-        self.image.as_ref().map(|p| env::get_config_dir().join(p))
+        self.image.as_ref().map(|p| env::get_config_file_path(p))
     }
 }
 
