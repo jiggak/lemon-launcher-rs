@@ -45,8 +45,8 @@ impl From<&Rom> for MenuEntry {
             screenshot: Some(screenshot),
             details: Some(MenuEntryDetail {
                 is_favourite: r.is_favourite,
-                year: r.year.clone().unwrap_or_default(),
-                manufacturer: r.manufacturer.clone().unwrap_or_default()
+                year: r.year.clone(),
+                manufacturer: r.manufacturer.clone()
             })
         }
     }
@@ -105,6 +105,6 @@ pub enum Query {
 #[derive(Deserialize, Clone, PartialEq)]
 pub struct MenuEntryDetail {
     pub is_favourite: bool,
-    pub year: String,
-    pub manufacturer: String
+    pub year: Option<String>,
+    pub manufacturer: Option<String>
 }

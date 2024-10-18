@@ -119,23 +119,29 @@ impl LemonLauncher {
             return Ok(());
         };
 
-        let is_fav = if item_detail.is_favourite { "Y" } else { "N" };
+        let is_fav = if item_detail.is_favourite {
+            String::from("Y")
+        } else {
+            String::from("N")
+        };
 
         for (key, widget) in &self.config.widgets {
             match &widget.content {
                 WidgetContent::Text(content) => {
                     let text = match key {
-                        WidgetKey::Favourite => is_fav,
-                        WidgetKey::Year => &item_detail.year,
-                        WidgetKey::Manufacturer => &item_detail.manufacturer
+                        WidgetKey::Favourite => Some(&is_fav),
+                        WidgetKey::Year => item_detail.year.as_ref(),
+                        WidgetKey::Manufacturer => item_detail.manufacturer.as_ref()
                     };
-                    let text = content.replace("{}", text);
+                    if let Some(text) = text {
+                        let text = content.replace("{}", text);
 
-                    let color = widget.text_color;
-                    let justify = &widget.justify;
-                    let dest = widget.get_rect();
+                        let color = widget.text_color;
+                        let justify = &widget.justify;
+                        let dest = widget.get_rect();
 
-                    renderer.draw_text(text, color, dest, justify)?;
+                        renderer.draw_text(text, color, dest, justify)?;
+                    }
                 },
                 WidgetContent::Image { image_path } => {
                     let image_path = match key {
