@@ -14,31 +14,30 @@ mame.args = [
 ]
 
 [menu]
-position = { x = 25, y = 0 }
-size = { width = 450, height = 460 }
-hover_offset = 5
+position = { x = 10, y = 10 }
+size = { width = 620, height = 420 }
+hover_offset = 6
 line_height = 30
 justify = "center"
 text_color = [0xff, 0xff, 0xff]
 hover_color = [0x23, 0xc1, 0]
 
 [screenshot]
-position = { x = 480, y = 10 }
-size = { width = 160, height = 120 }
+position = { x = 460, y = 10 }
+size = { width = 170, height = 124 }
 dir = "/run/user/1000/gvfs/smb-share:server=freenas,share=bilbo/Storage/Games/Mame/MAME_0.142_Titles"
 
 [widgets.favourite]
-position = { x = 600, y = 10 }
-size = { width = 30, height = 30 }
+position = { x = 610, y = 450 }
+size = { width = 20, height = 20 }
 content = { image = "star.png" }
 
 [widgets.year]
-position = { x = 480, y = 460 }
-size = { width = 160, height = 20 }
+position = { x = 10, y = 450 }
+size = { width = 110, height = 24 }
 
 [widgets.manufacturer]
-position = { x = 20, y = 460 }
-size = { width = 460, height = 20 }
-content = "{}"
+position = { x = 120, y = 450 }
+size = { width = 400, height = 24 }
 justify = "center"
 text_color = [0xe1, 0xdd, 0x14]
