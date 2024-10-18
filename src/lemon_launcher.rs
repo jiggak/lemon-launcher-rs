@@ -96,12 +96,14 @@ impl LemonLauncher {
     }
 
     fn draw_screenshot(&self, renderer: &mut Renderer) -> Result<()> {
-        if let Some(screenshot) = &self.menu.selected().screenshot {
-            if screenshot.exists() {
-                let region = self.config.screenshot.get_rect();
-                renderer.draw_image(screenshot, region)?;
-            } else {
-                println!("Screenshot {:?} not found", screenshot);
+        if let Some(entry) = self.menu.selected() {
+            if let Some(screenshot) = &entry.screenshot {
+                if screenshot.exists() {
+                    let region = self.config.screenshot.get_rect();
+                    renderer.draw_image(screenshot, region)?;
+                } else {
+                    println!("Screenshot {:?} not found", screenshot);
+                }
             }
         }
 
@@ -109,8 +111,9 @@ impl LemonLauncher {
     }
 
     fn draw_widgets(&self, renderer: &mut Renderer) -> Result<()> {
-        let item = self.menu.selected();
-        let item_detail = if let Some(details) = &item.details {
+        let item_detail = self.menu.selected()
+            .and_then(|x| x.details.as_ref());
+        let item_detail = if let Some(details) = item_detail {
             details
         } else {
             return Ok(());

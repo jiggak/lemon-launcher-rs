@@ -28,36 +28,40 @@ impl LemonMenu {
         }
     }
 
-    pub fn selected(&self) -> &MenuEntry {
-        &self.entries[self.index]
+    pub fn selected(&self) -> Option<&MenuEntry> {
+        self.entries.get(self.index)
     }
 
     pub fn is_selected(&self, entry: &MenuEntry) -> bool {
-        self.selected() == entry
+        self.selected()
+            .map(|selected| selected == entry)
+            .unwrap_or_default()
     }
 
     pub fn activate(&mut self) -> Result<EventReply> {
-        let entry = self.selected().action.clone();
-        match entry {
-            MenuEntryAction::Menu { menu } => {
-                let entries = self.config.menus[&menu].entries.clone();
-                self.set_entries(entries)
-            },
-            MenuEntryAction::BuiltIn(BuiltInAction::Exit) => {
-                return Ok(EventReply::Exit)
-            },
-            MenuEntryAction::Query(query) => {
-                let entries = query.exec()?;
-                self.set_entries(entries)
-            },
-            MenuEntryAction::Exec { exec, args } => {
-                exec_command(&exec, args.as_ref())?
-            },
-            MenuEntryAction::Rom { rom, params } => {
-                let rom_lib = RomLibrary::open()?;
-                rom_lib.inc_play_count(&rom)?;
+        if let Some(entry) = self.selected() {
+            let action = entry.action.clone();
+            match action {
+                MenuEntryAction::Menu { menu } => {
+                    let entries = self.config.menus[&menu].entries.clone();
+                    self.set_entries(entries)
+                },
+                MenuEntryAction::BuiltIn(BuiltInAction::Exit) => {
+                    return Ok(EventReply::Exit)
+                },
+                MenuEntryAction::Query(query) => {
+                    let entries = query.exec()?;
+                    self.set_entries(entries)
+                },
+                MenuEntryAction::Exec { exec, args } => {
+                    exec_command(&exec, args.as_ref())?
+                },
+                MenuEntryAction::Rom { rom, params } => {
+                    let rom_lib = RomLibrary::open()?;
+                    rom_lib.inc_play_count(&rom)?;
 
-                self.mame_cmd.exec(&rom, params.as_ref())?
+                    self.mame_cmd.exec(&rom, params.as_ref())?
+                }
             }
         }
 
@@ -65,10 +69,12 @@ impl LemonMenu {
     }
 
     pub fn toggle_favourite(&mut self) -> Result<()> {
-        if let MenuEntryAction::Rom { rom, .. } = &self.selected().action {
-            let rom_lib = RomLibrary::open()?;
-            rom_lib.toggle_favourite(&rom)?;
-            self.refresh()?;
+        if let Some(entry) = self.selected() {
+            if let MenuEntryAction::Rom { rom, .. } = &entry.action {
+                let rom_lib = RomLibrary::open()?;
+                rom_lib.toggle_favourite(rom)?;
+                self.refresh()?;
+            }
         }
 
         Ok(())
