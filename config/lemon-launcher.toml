@@ -22,22 +22,31 @@ justify = "center"
 text_color = [0xff, 0xff, 0xff]
 hover_color = [0x23, 0xc1, 0]
 
-[screenshot]
-position = { x = 460, y = 10 }
-size = { width = 170, height = 124 }
-dir = "/run/user/1000/gvfs/smb-share:server=freenas,share=bilbo/Storage/Games/Mame/MAME_0.142_Titles"
+[[widgets]]
+position = { x = 455, y = 4 }
+size = { width = 181, height = 135 }
+content.type = "screenshot"
+content.dir = "/run/user/1000/gvfs/smb-share:server=freenas,share=bilbo/Storage/Games/Mame/MAME_0.142_Titles"
+content.background = "background_screenshot.png"
+content.position = { x = 460, y = 10 }
+content.size = { width = 170, height = 124 }
 
-[widgets.favourite]
+[[widgets]]
 position = { x = 610, y = 450 }
 size = { width = 20, height = 20 }
-content = { image = "star.png" }
+content.type = "favourite"
+content.yes_image = "star.png"
 
-[widgets.year]
+[[widgets]]
 position = { x = 10, y = 450 }
 size = { width = 110, height = 24 }
+content.type = "text"
+content.field = "year"
 
-[widgets.manufacturer]
+[[widgets]]
 position = { x = 120, y = 450 }
 size = { width = 400, height = 24 }
-justify = "center"
-text_color = [0xe1, 0xdd, 0x14]
+content.type = "text"
+content.field = "manufacturer"
+content.justify = "center"
+content.text_color = [0xe1, 0xdd, 0x14]

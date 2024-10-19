@@ -2,7 +2,7 @@ use anyhow::Result;
 use serde::Deserialize;
 use std::{collections::HashMap, fs, path::{Path, PathBuf}};
 
-use crate::{env, rom_library::Rom};
+use crate::rom_library::Rom;
 
 #[derive(Deserialize)]
 pub struct MenuConfig {
@@ -34,7 +34,7 @@ pub struct MenuEntry {
 
 impl From<&Rom> for MenuEntry {
     fn from(r: &Rom) -> Self {
-        let screenshot = env::get_screenshot_file_path(format!("{}.png", r.name));
+        let screenshot = PathBuf::from(format!("{}.png", r.name));
 
         MenuEntry {
             title: r.title.clone(),

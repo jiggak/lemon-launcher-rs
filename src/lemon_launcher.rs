@@ -3,7 +3,7 @@ use sdl2::{keyboard::Keycode, rect::Rect};
 
 use crate::{
     env, keymap::{Action, SdlKeycodeToAction},
-    lemon_config::{LemonConfig, WidgetContent, WidgetKey},
+    lemon_config::{LemonConfig, WidgetContent, WidgetField},
     lemon_menu::LemonMenu,
     lemon_screen::{EventReply, LemonScreen},
     renderer::Renderer
@@ -95,70 +95,59 @@ impl LemonLauncher {
         Ok(())
     }
 
-    fn draw_screenshot(&self, renderer: &mut Renderer) -> Result<()> {
-        if let Some(entry) = self.menu.selected() {
-            if let Some(screenshot) = &entry.screenshot {
-                if screenshot.exists() {
-                    let region = self.config.screenshot.get_rect();
-                    renderer.draw_image(screenshot, region)?;
-                } else {
-                    println!("Screenshot {:?} not found", screenshot);
-                }
-            }
-        }
-
-        Ok(())
-    }
-
     fn draw_widgets(&self, renderer: &mut Renderer) -> Result<()> {
-        let item_detail = self.menu.selected()
-            .and_then(|x| x.details.as_ref());
-        let item_detail = if let Some(details) = item_detail {
-            details
-        } else {
-            return Ok(());
-        };
+        let item_detail = self.menu.selected_detail();
 
-        let is_fav = if item_detail.is_favourite {
-            String::from("Y")
-        } else {
-            String::from("N")
-        };
-
-        for (key, widget) in &self.config.widgets {
+        for widget in &self.config.widgets {
             match &widget.content {
-                WidgetContent::Text(content) => {
-                    let text = match key {
-                        WidgetKey::Favourite => Some(&is_fav),
-                        WidgetKey::Year => item_detail.year.as_ref(),
-                        WidgetKey::Manufacturer => item_detail.manufacturer.as_ref()
-                    };
-                    if let Some(text) = text {
-                        let text = content.replace("{}", text);
+                WidgetContent::Text { field, template, text_color, justify } => {
+                    if let Some(item_detail) = item_detail {
+                        let text = match field {
+                            WidgetField::Year => item_detail.year.as_ref(),
+                            WidgetField::Manufacturer => item_detail.manufacturer.as_ref()
+                        };
 
-                        let color = widget.text_color;
-                        let justify = &widget.justify;
-                        let dest = widget.get_rect();
-
-                        renderer.draw_text(text, color, dest, justify)?;
+                        if let Some(text) = text {
+                            let text = template.replace("{}", text);
+                            renderer.draw_text(text, *text_color, widget.get_rect(), justify)?;
+                        }
                     }
                 },
-                WidgetContent::Image { image_path } => {
-                    let image_path = match key {
-                        WidgetKey::Favourite => {
-                            if item_detail.is_favourite {
-                                Some(image_path)
-                            } else {
-                                None
-                            }
-                        },
-                        _ => Some(image_path)
-                    };
+                WidgetContent::Favourite { yes_image } => {
+                    if let Some(item_detail) = item_detail {
+                        let image_path = if item_detail.is_favourite {
+                            Some(yes_image)
+                        } else {
+                            None
+                        };
 
-                    if let Some(image_path) = image_path {
-                        let image_path = env::get_config_file_path(image_path);
-                        let dest = widget.get_rect();
-                        renderer.draw_image(&image_path, dest)?;
+                        if let Some(image_path) = image_path {
+                            let image_path = env::get_config_file_path(image_path);
+                            renderer.draw_image(&image_path, widget.get_rect())?;
+                        }
+                    }
+                },
+                WidgetContent::Image { image } => {
+                    let image_path = env::get_config_file_path(image);
+                    renderer.draw_image(&image_path, widget.get_rect())?;
+                },
+                WidgetContent::Screenshot { dir, background, position, size } => {
+                    if let Some(screenshot) = self.menu.selected_screenshot() {
+                        let screenshot = dir.join(screenshot);
+                        if screenshot.exists() {
+                            if let Some(background) = background {
+                                let background = env::get_config_file_path(background);
+                                renderer.draw_image(&background, widget.get_rect())?;
+                            }
+
+                            let dest = if let (Some(pos), Some(size)) = (position, size) {
+                                Rect::new(pos.x, pos.y, size.width, size.height)
+                            } else {
+                                widget.get_rect()
+                            };
+
+                            renderer.draw_image(&screenshot, dest)?;
+                        }
                     }
                 }
             }
@@ -172,7 +161,6 @@ impl LemonScreen for LemonLauncher {
     fn draw(&self, renderer: &mut Renderer) -> Result<()> {
         self.draw_background(renderer)?;
         self.draw_menu(renderer)?;
-        self.draw_screenshot(renderer)?;
         self.draw_widgets(renderer)?;
 
         renderer.present();

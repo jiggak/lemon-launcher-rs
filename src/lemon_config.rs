@@ -1,7 +1,7 @@
 use anyhow::Result;
 use sdl2::rect::Rect;
 use serde::Deserialize;
-use std::{collections::HashMap, fs, path::{Path, PathBuf}};
+use std::{fs, path::{Path, PathBuf}};
 
 use crate::env;
 
@@ -11,9 +11,8 @@ pub struct LemonConfig {
     pub font: Font,
     pub background: Option<Background>,
     pub menu: LemonMenuConfig,
-    pub screenshot: ScreenshotConfig,
     pub mame: MameCommand,
-    pub widgets: HashMap<WidgetKey, Widget>
+    pub widgets: Vec<Widget>
 }
 
 impl LemonConfig {
@@ -23,6 +22,14 @@ impl LemonConfig {
 
         Ok(config)
     }
+}
+
+fn default_field_template() -> String {
+    String::from("{}")
+}
+
+fn default_text_colour() -> (u8, u8, u8) {
+    (0xff, 0xff, 0xff)
 }
 
 #[derive(Deserialize, Clone)]
@@ -76,10 +83,6 @@ impl LemonMenuConfig {
     }
 }
 
-fn default_text_colour() -> (u8, u8, u8) {
-    (0xff, 0xff, 0xff)
-}
-
 pub type Color = (u8, u8, u8);
 
 #[derive(Deserialize)]
@@ -121,38 +124,9 @@ impl Default for Justify {
 }
 
 #[derive(Deserialize)]
-pub struct ScreenshotConfig {
-    pub dir: Option<PathBuf>,
-    pub position: Point,
-    pub size: Size
-}
-
-impl ScreenshotConfig {
-    pub fn get_rect(&self) -> Rect {
-        Rect::new(self.position.x, self.position.y, self.size.width, self.size.height)
-    }
-}
-
-#[derive(Deserialize, PartialEq, Eq, Hash)]
-pub enum WidgetKey {
-    #[serde(rename = "favourite")]
-    Favourite,
-    #[serde(rename = "year")]
-    Year,
-    #[serde(rename = "manufacturer")]
-    Manufacturer
-}
-
-
-#[derive(Deserialize)]
 pub struct Widget {
     pub position: Point,
     pub size: Size,
-    #[serde(default = "default_text_colour")]
-    pub text_color: Color,
-    #[serde(default)]
-    pub justify: Justify,
-    #[serde(default)]
     pub content: WidgetContent
 }
 
@@ -163,17 +137,39 @@ impl Widget {
 }
 
 #[derive(Deserialize)]
-#[serde(untagged)]
-pub enum WidgetContent {
-    Text(String),
-    Image {
-        #[serde(rename = "image")]
-        image_path: PathBuf
-    }
+pub enum WidgetField {
+    #[serde(rename = "year")]
+    Year,
+    #[serde(rename = "manufacturer")]
+    Manufacturer
 }
 
-impl Default for WidgetContent {
-    fn default() -> Self {
-        WidgetContent::Text("{}".into())
+#[derive(Deserialize)]
+#[serde(tag = "type")]
+pub enum WidgetContent {
+    #[serde(rename = "text")]
+    Text {
+        field: WidgetField,
+        #[serde(default = "default_field_template")]
+        template: String,
+        #[serde(default = "default_text_colour")]
+        text_color: Color,
+        #[serde(default)]
+        justify: Justify
+    },
+    #[serde(rename = "image")]
+    Image {
+        image: PathBuf
+    },
+    #[serde(rename = "screenshot")]
+    Screenshot {
+        dir: PathBuf,
+        background: Option<PathBuf>,
+        position: Option<Point>,
+        size: Option<Size>
+    },
+    #[serde(rename = "favourite")]
+    Favourite {
+        yes_image: PathBuf
     }
 }

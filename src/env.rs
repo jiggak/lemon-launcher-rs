@@ -1,20 +1,5 @@
 use std::{env, path::{Path, PathBuf}};
 
-pub fn set_screenshots_dir(path: impl AsRef<Path>) {
-    env::set_var("LL_SCREENSHOTS_DIR", path.as_ref().as_os_str())
-}
-
-pub fn get_screenshot_file_path(file_name: impl AsRef<Path>) -> PathBuf {
-    let screenshot_dir = match env::var("LL_SCREENSHOTS_DIR") {
-        Ok(var) => PathBuf::from(var),
-        Err(_) => {
-            get_config_dir().join("screenshots")
-        }
-    };
-
-    screenshot_dir.join(file_name)
-}
-
 pub fn set_config_dir(path: &str) {
     env::set_var("LL_CONFIG_HOME", path)
 }

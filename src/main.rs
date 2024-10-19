@@ -35,10 +35,6 @@ fn main() -> Result<()> {
 
     let config = LemonConfig::load_config(&env::get_config_path())?;
 
-    if let Some(screenshots_dir) = &config.screenshot.dir {
-        env::set_screenshots_dir(screenshots_dir);
-    }
-
     match cli.command {
         Some(Commands::Scan { mame_xml, genre_ini, roms_dir }) => {
             scan::scan(&mame_xml, &genre_ini, &roms_dir)

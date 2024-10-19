@@ -1,10 +1,10 @@
-use std::{io, process::Command};
+use std::{io, path::PathBuf, process::Command};
 
 use anyhow::Result;
 
 use crate::{
     lemon_config::MameCommand, lemon_screen::EventReply,
-    menu_config::{BuiltInAction, MenuConfig, MenuEntry, MenuEntryAction, Query},
+    menu_config::{BuiltInAction, MenuConfig, MenuEntry, MenuEntryAction, MenuEntryDetail, Query},
     rom_library::RomLibrary
 };
 
@@ -30,6 +30,14 @@ impl LemonMenu {
 
     pub fn selected(&self) -> Option<&MenuEntry> {
         self.entries.get(self.index)
+    }
+
+    pub fn selected_screenshot(&self) -> Option<&PathBuf> {
+        self.selected().and_then(|entry| entry.screenshot.as_ref())
+    }
+
+    pub fn selected_detail(&self) -> Option<&MenuEntryDetail> {
+        self.selected().and_then(|x| x.details.as_ref())
     }
 
     pub fn is_selected(&self, entry: &MenuEntry) -> bool {
