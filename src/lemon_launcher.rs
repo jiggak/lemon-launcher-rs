@@ -16,12 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+use std::path::PathBuf;
+
 use anyhow::Result;
 use sdl2::{keyboard::Keycode, rect::Rect};
 
 use crate::{
     env, keymap::{Action, SdlKeycodeToAction},
-    lemon_config::{LemonConfig, WidgetContent, WidgetField},
+    lemon_config::{LemonConfig, ScreenshotWidget, TextWidget, WidgetContent, WidgetField},
     lemon_menu::LemonMenu,
     lemon_screen::{EventReply, LemonScreen},
     renderer::Renderer
@@ -114,60 +116,88 @@ impl LemonLauncher {
     }
 
     fn draw_widgets(&self, renderer: &mut Renderer) -> Result<()> {
-        let item_detail = self.menu.selected_detail();
-
         for widget in &self.config.widgets {
             match &widget.content {
-                WidgetContent::Text { field, template, text_color, justify } => {
-                    if let Some(item_detail) = item_detail {
-                        let text = match field {
-                            WidgetField::Year => item_detail.year.as_ref(),
-                            WidgetField::Manufacturer => item_detail.manufacturer.as_ref()
-                        };
-
-                        if let Some(text) = text {
-                            let text = template.replace("{}", text);
-                            renderer.draw_text(text, *text_color, widget.get_rect(), justify)?;
-                        }
-                    }
+                WidgetContent::Text(text) => {
+                    self.draw_text_widget(renderer, widget.get_rect(), text)?;
                 },
                 WidgetContent::Favourite { yes_image } => {
-                    if let Some(item_detail) = item_detail {
-                        let image_path = if item_detail.is_favourite {
-                            Some(yes_image)
-                        } else {
-                            None
-                        };
-
-                        if let Some(image_path) = image_path {
-                            let image_path = env::get_config_file_path(image_path);
-                            renderer.draw_image(&image_path, widget.get_rect())?;
-                        }
-                    }
+                    self.draw_favourite_widget(renderer, widget.get_rect(), yes_image)?;
                 },
                 WidgetContent::Image { image } => {
                     let image_path = env::get_config_file_path(image);
                     renderer.draw_image(&image_path, widget.get_rect())?;
                 },
-                WidgetContent::Screenshot { dir, background, position, size } => {
-                    if let Some(screenshot) = self.menu.selected_screenshot() {
-                        let screenshot = dir.join(screenshot);
-                        if screenshot.exists() {
-                            if let Some(background) = background {
-                                let background = env::get_config_file_path(background);
-                                renderer.draw_image(&background, widget.get_rect())?;
-                            }
-
-                            let dest = if let (Some(pos), Some(size)) = (position, size) {
-                                Rect::new(pos.x, pos.y, size.width, size.height)
-                            } else {
-                                widget.get_rect()
-                            };
-
-                            renderer.draw_image(&screenshot, dest)?;
-                        }
-                    }
+                WidgetContent::Screenshot(screenshot) => {
+                    self.draw_screenshot_widget(renderer, widget.get_rect(), screenshot)?;
                 }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn draw_text_widget(&self,
+        renderer: &mut Renderer,
+        dest: Rect,
+        config: &TextWidget
+    ) -> Result<()> {
+        if let Some(detail) = self.menu.selected_detail() {
+            let text = match config.field {
+                WidgetField::Year => detail.year.as_ref(),
+                WidgetField::Manufacturer => detail.manufacturer.as_ref()
+            };
+
+            if let Some(text) = text {
+                let text = config.template.replace("{}", text);
+                renderer.draw_text(text, config.text_color, dest, &config.justify)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn draw_favourite_widget(&self,
+        renderer: &mut Renderer,
+        dest: Rect,
+        yes_image: &PathBuf
+    ) -> Result<()> {
+        if let Some(detail) = self.menu.selected_detail() {
+            let image_path = if detail.is_favourite {
+                Some(yes_image)
+            } else {
+                None
+            };
+
+            if let Some(image_path) = image_path {
+                let image_path = env::get_config_file_path(image_path);
+                renderer.draw_image(&image_path, dest)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn draw_screenshot_widget(&self,
+        renderer: &mut Renderer,
+        dest: Rect,
+        config: &ScreenshotWidget
+    ) -> Result<()> {
+        if let Some(screenshot) = self.menu.selected_screenshot() {
+            let screenshot = config.dir.join(screenshot);
+            if screenshot.exists() {
+                if let Some(background) = &config.background {
+                    let background = env::get_config_file_path(background);
+                    renderer.draw_image(&background, dest)?;
+                }
+
+                let dest = if let (Some(pos), Some(size)) = (&config.position, &config.size) {
+                    Rect::new(pos.x, pos.y, size.width, size.height)
+                } else {
+                    dest
+                };
+
+                renderer.draw_image(&screenshot, dest)?;
             }
         }
 

@@ -166,28 +166,34 @@ pub enum WidgetField {
 #[serde(tag = "type")]
 pub enum WidgetContent {
     #[serde(rename = "text")]
-    Text {
-        field: WidgetField,
-        #[serde(default = "default_field_template")]
-        template: String,
-        #[serde(default = "default_text_colour")]
-        text_color: Color,
-        #[serde(default)]
-        justify: Justify
-    },
+    Text(TextWidget),
     #[serde(rename = "image")]
     Image {
         image: PathBuf
     },
     #[serde(rename = "screenshot")]
-    Screenshot {
-        dir: PathBuf,
-        background: Option<PathBuf>,
-        position: Option<Point>,
-        size: Option<Size>
-    },
+    Screenshot(ScreenshotWidget),
     #[serde(rename = "favourite")]
     Favourite {
         yes_image: PathBuf
     }
+}
+
+#[derive(Deserialize)]
+pub struct TextWidget {
+    pub field: WidgetField,
+    #[serde(default = "default_field_template")]
+    pub template: String,
+    #[serde(default = "default_text_colour")]
+    pub text_color: Color,
+    #[serde(default)]
+    pub justify: Justify
+}
+
+#[derive(Deserialize)]
+pub struct ScreenshotWidget {
+    pub dir: PathBuf,
+    pub background: Option<PathBuf>,
+    pub position: Option<Point>,
+    pub size: Option<Size>
 }
