@@ -65,7 +65,7 @@ impl LemonLauncher {
             }
 
             if let Some(image) = background.get_iamge_path() {
-                renderer.draw_image(&image, self.config.size.get_rect())?;
+                renderer.draw_background_image(&image)?;
             }
         }
 

@@ -71,20 +71,21 @@ fn launch(config: LemonConfig) -> Result<()> {
     let menu = LemonMenu::new(menu_config, config.mame.clone());
     let keymap = Keymap::load(env::get_keymap_path())?;
 
-    let size = config.size.clone();
+    let screen_size = config.size.clone();
+    let ui_size = config.get_ui_size().clone();
     let font = config.font.clone();
     let app = LemonLauncher::new(config, menu, keymap.into());
 
-    launch_ui(&size, &font, app)
+    launch_ui(&screen_size, &ui_size, &font, app)
 }
 
 fn launch_keymap(config: LemonConfig, file_path: PathBuf) -> Result<()> {
     let app = LemonKeymap::new(file_path);
 
-    launch_ui(&config.size, &config.font, app)
+    launch_ui(&config.size, config.get_ui_size(), &config.font, app)
 }
 
-fn launch_ui(size: &Size, font: &Font, mut app: impl LemonScreen) -> Result<()> {
+fn launch_ui(screen_size: &Size, ui_size: &Size, font: &Font, mut app: impl LemonScreen) -> Result<()> {
     let sdl_context = sdl2::init()
         .map_err(|e| Error::msg(e))?;
 
@@ -97,7 +98,7 @@ fn launch_ui(size: &Size, font: &Font, mut app: impl LemonScreen) -> Result<()> 
 
     let window = sdl_context.video()
         .map_err(|e| Error::msg(e))?
-        .window("Lemon Launcher", size.width, size.height)
+        .window("Lemon Launcher", screen_size.width, screen_size.height)
         .resizable()
         .position_centered()
         .opengl()
@@ -106,7 +107,7 @@ fn launch_ui(size: &Size, font: &Font, mut app: impl LemonScreen) -> Result<()> 
     sdl_context.mouse()
         .show_cursor(false);
 
-    let mut renderer = Renderer::new(font, window)?;
+    let mut renderer = Renderer::new(font, window, ui_size)?;
 
     let mut event_pump = sdl_context.event_pump()
         .map_err(|e| Error::msg(e))?;

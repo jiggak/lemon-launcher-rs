@@ -31,15 +31,14 @@ pub struct Renderer<'a, 'b> {
 }
 
 impl<'a, 'b> Renderer<'a, 'b> {
-    pub fn new(font: Font<'a, 'b>, window: Window) -> Result<Self> {
-        let (win_width, win_height) = window.size();
-
+    pub fn new(font: Font<'a, 'b>, window: Window, canvas_size: &Size) -> Result<Self> {
         let mut canvas = window
             .into_canvas()
             .build()?;
 
-        // using window size as logical size lets the interface scale
-        canvas.set_logical_size(win_width, win_height)?;
+        // this allows the interface to scale with the window
+        // also allows the UI to be scaled down to arcade monitor res
+        canvas.set_logical_size(canvas_size.width, canvas_size.height)?;
 
         Ok(Renderer {
             font, canvas
@@ -94,6 +93,14 @@ impl<'a, 'b> Renderer<'a, 'b> {
     pub fn draw_background<C: Into<Color>>(&mut self, color: C) {
         self.canvas.set_draw_color(color);
         self.canvas.clear();
+    }
+
+    pub fn draw_background_image(&mut self, img_path: &Path) -> Result<()> {
+        let texture_creator = self.canvas.texture_creator();
+        let texture = texture_creator.load_texture(img_path)
+            .map_err(|e| Error::msg(e))?;
+        self.canvas.copy(&texture, None, None)
+            .map_err(|e| Error::msg(e))
     }
 
     pub fn present(&mut self) {

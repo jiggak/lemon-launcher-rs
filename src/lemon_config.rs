@@ -26,6 +26,7 @@ use crate::env;
 #[derive(Deserialize)]
 pub struct LemonConfig {
     pub size: Size,
+    pub ui_size: Option<Size>,
     pub font: Font,
     pub background: Option<Background>,
     pub menu: LemonMenuConfig,
@@ -39,6 +40,11 @@ impl LemonConfig {
         let config:LemonConfig = toml::from_str(&toml_src)?;
 
         Ok(config)
+    }
+
+    pub fn get_ui_size(&self) -> &Size {
+        self.ui_size.as_ref()
+            .unwrap_or(&self.size)
     }
 }
 

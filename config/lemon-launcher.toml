@@ -1,5 +1,8 @@
-size.width = 640
-size.height = 480
+size.width = 320
+size.height = 240
+
+ui_size.width = 640
+ui_size.height = 480
 
 font.file = "PressStart2P-vaV7.ttf"
 font.size = 20
