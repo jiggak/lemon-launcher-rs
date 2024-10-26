@@ -23,7 +23,7 @@ pub fn set_config_dir(path: &str) {
 }
 
 fn get_config_dir() -> PathBuf {
-    // get data directory resolve order:
+    // get config directory resolve order:
     // $LL_CONFIG_HOME, $XDG_CONFIG_HOME/lemon-launcher, $HOME/.config/lemon-launcher
     match env::var("LL_CONFIG_HOME") {
         Ok(var) => PathBuf::from(var),
@@ -44,6 +44,28 @@ fn get_config_dir() -> PathBuf {
     }
 }
 
+fn get_state_dir() -> PathBuf {
+    // get state directory resolve order:
+    // $LL_STATE_HOME, $XDG_STATE_HOME/lemon-launcher, $HOME/.local/state/lemon-launcher
+    match env::var("LL_STATE_HOME") {
+        Ok(var) => PathBuf::from(var),
+        Err(_) => {
+            let base_data_dir = match env::var("XDG_STATE_HOME") {
+                Ok(var) => PathBuf::from(var),
+                Err(_) => {
+                    let home_dir = env::var("HOME")
+                        .expect("HOME env var not found");
+
+                    PathBuf::from(home_dir)
+                        .join(".local/state")
+                }
+            };
+
+            base_data_dir.join(get_package_name())
+        }
+    }
+}
+
 /// Get path of file relative to the config dir
 pub fn get_config_file_path(file: impl AsRef<Path>) -> PathBuf {
     get_config_dir().join(file)
@@ -54,7 +76,7 @@ fn get_package_name() -> &'static str {
 }
 
 pub fn get_rom_lib_path() -> PathBuf {
-    get_config_file_path("roms.db")
+    get_state_dir().join("roms.db")
 }
 
 pub fn get_config_path() -> PathBuf {
