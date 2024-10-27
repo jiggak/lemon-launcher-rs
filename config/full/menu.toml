@@ -1,6 +1,6 @@
 [main]
 entries = [
-   { title = "Most Played", action = { query = "popular", count = 15 }, screenshot = "config/star.png" },
+   { title = "Most Played", action = { query = "popular", count = 15 } },
    { title = "Favourites", action = { query = "favourites", count = 15 } },
    { title = "Categories", action.query = "categories" },
    { title = "All Games", action.query = "roms" },

@@ -1,0 +1,18 @@
+size.width = 320
+size.height = 240
+
+font.file = "PressStart2P-vaV7.ttf"
+font.size = 12
+
+background.colour = [0x00, 0x00, 0x00]
+
+mame.cmd = "mame"
+
+[menu]
+position = { x = 0, y = 0 }
+size = { width = 320, height = 240 }
+focus_offset = 5
+line_height = 20
+justify = "center"
+text_color = [0xff, 0xff, 0xff]
+focus_color = [0xe1, 0xdd, 0x14]

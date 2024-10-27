@@ -88,5 +88,5 @@ pub fn get_menu_path() -> PathBuf {
 }
 
 pub fn get_keymap_path() -> PathBuf {
-    get_config_file_path("keymap.toml")
+    get_state_dir().join("keymap.toml")
 }

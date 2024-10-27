@@ -1,0 +1,15 @@
+[main]
+entries = [
+   { title = "Sub Menu", action.menu = "sub_menu" },
+   { title = "Hello, World!", action.exec = "echo", action.args = ["Hello, World!"] },
+   { title = "Exit", action = "exit" }
+]
+
+[menus.sub_menu]
+entries = [
+   { title = "Entry 1", action = "exit" },
+   { title = "Entry 2", action = "exit" },
+   { title = "Entry 3", action = "exit" },
+   { title = "Entry 4", action = "exit" },
+   { title = "Entry 5", action = "exit" }
+]
