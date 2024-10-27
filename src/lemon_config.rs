@@ -31,11 +31,12 @@ pub struct LemonConfig {
     pub background: Option<Background>,
     pub menu: LemonMenuConfig,
     pub mame: MameCommand,
+    #[serde(default = "Vec::new")]
     pub widgets: Vec<Widget>
 }
 
 impl LemonConfig {
-    pub fn load_config(file_path: impl AsRef<Path>) -> Result<Self> {
+    pub fn load_config(file_path: impl AsRef<Path>) -> Result<Self, ConfigError> {
         let toml_src = fs::read_to_string(file_path)?;
         let config:LemonConfig = toml::from_str(&toml_src)?;
 
@@ -48,12 +49,16 @@ impl LemonConfig {
     }
 }
 
-fn default_field_template() -> String {
-    String::from("{}")
+#[derive(thiserror::Error, Debug)]
+pub enum ConfigError {
+    #[error("Unable to read config file")]
+    Io(#[from] std::io::Error),
+    #[error("Invalid config file syntax/format")]
+    Format(#[from] toml::de::Error)
 }
 
-fn default_text_colour() -> (u8, u8, u8) {
-    (0xff, 0xff, 0xff)
+fn default_field_template() -> String {
+    String::from("{}")
 }
 
 #[derive(Deserialize, Clone)]
@@ -88,13 +93,13 @@ pub struct MameCommand {
 
 #[derive(Deserialize)]
 pub struct LemonMenuConfig {
-    pub hover_offset: u32,
+    pub focus_offset: u32,
     pub line_height: u32,
     pub position: Point,
     pub size: Size,
     pub justify: Justify,
     pub text_color: Color,
-    pub hover_color: Color
+    pub focus_color: Color
 }
 
 impl LemonMenuConfig {
@@ -115,16 +120,16 @@ pub struct Point {
     pub y: i32
 }
 
+impl From<(i32, i32)> for Point {
+    fn from(value: (i32, i32)) -> Self {
+        Point { x: value.0, y: value.1 }
+    }
+}
+
 #[derive(Deserialize, Clone)]
 pub struct Size {
     pub width: u32,
     pub height: u32
-}
-
-impl Size {
-    pub fn get_rect(&self) -> Rect {
-        Rect::new(0, 0, self.width, self.height)
-    }
 }
 
 impl From<(u32, u32)> for Size {
@@ -190,8 +195,7 @@ pub struct TextWidget {
     pub field: WidgetField,
     #[serde(default = "default_field_template")]
     pub template: String,
-    #[serde(default = "default_text_colour")]
-    pub text_color: Color,
+    pub text_color: Option<Color>,
     #[serde(default)]
     pub justify: Justify
 }

@@ -77,10 +77,10 @@ impl LemonLauncher {
         let line_height = self.config.menu.line_height;
         let justify = &self.config.menu.justify;
         let text_color = self.config.menu.text_color;
-        let hover_color = self.config.menu.hover_color;
+        let focus_color = self.config.menu.focus_color;
 
         let rows = region.height() / line_height;
-        let top_rows = self.config.menu.hover_offset;
+        let top_rows = self.config.menu.focus_offset;
         let bottom_rows = rows - top_rows;
 
         let mut row_rect = Rect::new(
@@ -92,7 +92,7 @@ impl LemonLauncher {
 
         for entry in self.menu.iter_fwd().take(bottom_rows as usize) {
             let color = match self.menu.is_selected(entry) {
-                true => hover_color,
+                true => focus_color,
                 false => text_color
             };
 
@@ -150,7 +150,10 @@ impl LemonLauncher {
 
             if let Some(text) = text {
                 let text = config.template.replace("{}", text);
-                renderer.draw_text(text, config.text_color, dest, &config.justify)?;
+                let text_color = config.text_color
+                    .unwrap_or(self.config.menu.text_color);
+
+                renderer.draw_text(text, text_color, dest, &config.justify)?;
             }
         }
 

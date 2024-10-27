@@ -25,16 +25,25 @@ use crate::rom_library::Rom;
 #[derive(Deserialize)]
 pub struct MenuConfig {
     pub main: Menu,
+    #[serde(default = "HashMap::new")]
     pub menus: HashMap<String, Menu>
 }
 
 impl MenuConfig {
-    pub fn load_config(file_path: impl AsRef<Path>) -> Result<Self> {
+    pub fn load_config(file_path: impl AsRef<Path>) -> Result<Self, MenuError> {
         let toml_src = fs::read_to_string(file_path)?;
         let config:MenuConfig = toml::from_str(&toml_src)?;
 
         Ok(config)
     }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum MenuError {
+    #[error("Unable to read menu file")]
+    Io(#[from] std::io::Error),
+    #[error("Invalid menu file syntax/format")]
+    Format(#[from] toml::de::Error)
 }
 
 #[derive(Deserialize, Clone)]

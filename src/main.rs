@@ -93,6 +93,9 @@ fn launch_ui(screen_size: &Size, ui_size: &Size, font: &Font, mut app: impl Lemo
         .map_err(|e| Error::msg(e))?;
 
     let ttf_context = sdl2::ttf::init()?;
+    // let font_bytes = sdl2::rwops::RWops::from_bytes(include_bytes!("../config/PressStart2P-vaV7.ttf"))
+    //     .map_err(|e| Error::msg(e))?;
+    // let font = ttf_context.load_font_from_rwops(font_bytes, font.size)
     let font = ttf_context.load_font(&font.get_font_path(), font.size)
         .map_err(|e| Error::msg(e))?;
 

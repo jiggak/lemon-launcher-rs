@@ -19,11 +19,11 @@ mame.args = [
 [menu]
 position = { x = 10, y = 10 }
 size = { width = 620, height = 420 }
-hover_offset = 6
+focus_offset = 6
 line_height = 30
 justify = "center"
 text_color = [0xff, 0xff, 0xff]
-hover_color = [0x23, 0xc1, 0]
+focus_color = [0x23, 0xc1, 0]
 
 [[widgets]]
 position = { x = 455, y = 4 }
