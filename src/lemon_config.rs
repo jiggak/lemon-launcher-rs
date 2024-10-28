@@ -21,7 +21,7 @@ use sdl2::rect::Rect;
 use serde::Deserialize;
 use std::{fs, path::{Path, PathBuf}};
 
-use crate::env;
+use crate::{env, lemon_launcher::ConfigError};
 
 #[derive(Deserialize)]
 pub struct LemonConfig {
@@ -36,8 +36,9 @@ pub struct LemonConfig {
 }
 
 impl LemonConfig {
-    pub fn load_config(file_path: impl AsRef<Path>) -> Result<Self, ConfigError> {
-        let toml_src = fs::read_to_string(file_path)?;
+    pub fn load_config(file_path: impl AsRef<Path> + Copy) -> Result<Self, ConfigError> {
+        let toml_src = fs::read_to_string(file_path)
+            .map_err(|e| ConfigError::io(file_path.as_ref(), e))?;
         let config:LemonConfig = toml::from_str(&toml_src)?;
 
         Ok(config)
@@ -47,14 +48,6 @@ impl LemonConfig {
         self.ui_size.as_ref()
             .unwrap_or(&self.size)
     }
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum ConfigError {
-    #[error("Unable to read config file")]
-    Io(#[from] std::io::Error),
-    #[error("Invalid config file syntax/format")]
-    Format(#[from] toml::de::Error)
 }
 
 fn default_field_template() -> String {

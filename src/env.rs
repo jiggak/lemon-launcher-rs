@@ -16,54 +16,101 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{env, path::{Path, PathBuf}};
+use anyhow::{anyhow, Result};
+use std::{env, ffi::OsStr, path::{Path, PathBuf}};
 
-pub fn set_config_dir(path: &str) {
-    env::set_var("LL_CONFIG_HOME", path)
+
+pub fn init<P: AsRef<Path>>(config_file: Option<P>, menu_file: Option<P>) -> Result<()> {
+    // LL_CONFIG_FILE => name of config file
+    // LL_CONFIG_HOME => config directory containing config file(s)
+    // LL_MENU_PATH => path of menu file
+    // LL_STATE_HOME => variable state directory (i.e. roms.db file)
+
+    // TODO Maybe use this to clean this up? https://crates.io/crates/envy
+    // I don't like the repetition in init() and the use of unwrap below
+
+    if let Some(config_file) = config_file {
+        let (config_file_name, config_dir) = get_dir_file_pair(config_file.as_ref())?;
+
+        env::set_var("LL_CONFIG_FILE", config_file_name);
+        env::set_var("LL_CONFIG_HOME", config_dir);
+    }
+
+    if let Some(menu_file) = menu_file {
+        let (menu_file_name, menu_dir) = get_dir_file_pair(menu_file.as_ref())?;
+
+        env::set_var("LL_MENU_FILE", menu_file_name);
+        env::set_var("LL_MENU_HOME", menu_dir);
+    }
+
+    set_env_default("LL_CONFIG_FILE", "config.toml");
+    set_env_default("LL_CONFIG_HOME", &resolve_config_dir());
+    set_env_default("LL_MENU_FILE", "menu.toml");
+    set_env_default("LL_MENU_HOME", &get_config_dir());
+    set_env_default("LL_STATE_HOME", &resolve_state_dir());
+
+    Ok(())
+}
+
+fn get_dir_file_pair(file_path: &Path) -> Result<(&OsStr, &Path)> {
+    let file_name = file_path.file_name()
+        .ok_or(anyhow!("Could not get file name from {:?}", file_path))?;
+    let parent_dir = file_path.parent()
+        .ok_or(anyhow!("Could not get directory from {:?}", file_path))?;
+    Ok((file_name, parent_dir))
+}
+
+fn set_env_default<V: AsRef<OsStr>>(key: &str, value: V) {
+    if env::var(key).is_err() {
+        env::set_var(key, value);
+    }
+}
+
+fn resolve_config_dir() -> PathBuf {
+    // $XDG_CONFIG_HOME/lemon-launcher, $HOME/.config/lemon-launcher
+    let base_data_dir = match env::var("XDG_CONFIG_HOME") {
+        Ok(var) => PathBuf::from(var),
+        Err(_) => {
+            let home_dir = env::var("HOME")
+                .expect("HOME env var not found");
+
+            PathBuf::from(home_dir)
+                .join(".config")
+        }
+    };
+
+    base_data_dir.join(get_package_name())
+}
+
+fn resolve_state_dir() -> PathBuf {
+    // $XDG_STATE_HOME/lemon-launcher, $HOME/.local/state/lemon-launcher
+    let base_data_dir = match env::var("XDG_STATE_HOME") {
+        Ok(var) => PathBuf::from(var),
+        Err(_) => {
+            let home_dir = env::var("HOME")
+                .expect("HOME env var not found");
+
+            PathBuf::from(home_dir)
+                .join(".local/state")
+        }
+    };
+
+    base_data_dir.join(get_package_name())
 }
 
 fn get_config_dir() -> PathBuf {
-    // get config directory resolve order:
-    // $LL_CONFIG_HOME, $XDG_CONFIG_HOME/lemon-launcher, $HOME/.config/lemon-launcher
-    match env::var("LL_CONFIG_HOME") {
-        Ok(var) => PathBuf::from(var),
-        Err(_) => {
-            let base_data_dir = match env::var("XDG_CONFIG_HOME") {
-                Ok(var) => PathBuf::from(var),
-                Err(_) => {
-                    let home_dir = env::var("HOME")
-                        .expect("HOME env var not found");
-
-                    PathBuf::from(home_dir)
-                        .join(".config")
-                }
-            };
-
-            base_data_dir.join(get_package_name())
-        }
-    }
+    // using unwrap assuming init() is called
+    PathBuf::from(env::var("LL_CONFIG_HOME").unwrap())
 }
 
 fn get_state_dir() -> PathBuf {
-    // get state directory resolve order:
-    // $LL_STATE_HOME, $XDG_STATE_HOME/lemon-launcher, $HOME/.local/state/lemon-launcher
-    match env::var("LL_STATE_HOME") {
-        Ok(var) => PathBuf::from(var),
-        Err(_) => {
-            let base_data_dir = match env::var("XDG_STATE_HOME") {
-                Ok(var) => PathBuf::from(var),
-                Err(_) => {
-                    let home_dir = env::var("HOME")
-                        .expect("HOME env var not found");
+    // using unwrap assuming init() is called
+    PathBuf::from(env::var("LL_STATE_HOME").unwrap())
+}
 
-                    PathBuf::from(home_dir)
-                        .join(".local/state")
-                }
-            };
-
-            base_data_dir.join(get_package_name())
-        }
-    }
+fn get_menu_dir() -> PathBuf {
+    // using unwrap assuming init() is called
+    PathBuf::from(env::var("LL_MENU_HOME").unwrap())
 }
 
 /// Get path of file relative to the config dir
@@ -80,11 +127,11 @@ pub fn get_rom_lib_path() -> PathBuf {
 }
 
 pub fn get_config_path() -> PathBuf {
-    get_config_file_path("lemon-launcher.toml")
+    get_config_dir().join(env::var("LL_CONFIG_FILE").unwrap())
 }
 
 pub fn get_menu_path() -> PathBuf {
-    get_config_file_path("menu.toml")
+    get_menu_dir().join(env::var("LL_MENU_FILE").unwrap())
 }
 
 pub fn get_keymap_path() -> PathBuf {

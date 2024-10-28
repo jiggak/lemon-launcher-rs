@@ -228,3 +228,17 @@ impl LemonScreen for LemonLauncher {
         }
     }
 }
+
+#[derive(thiserror::Error, Debug)]
+pub enum ConfigError {
+    #[error("Unable to read config file {0}")]
+    Io(PathBuf, #[source] std::io::Error),
+    #[error("Invalid config file syntax/format")]
+    Format(#[from] toml::de::Error)
+}
+
+impl ConfigError {
+    pub fn io(file_path: &std::path::Path, error: std::io::Error) -> Self {
+        ConfigError::Io(file_path.to_path_buf(), error)
+    }
+}

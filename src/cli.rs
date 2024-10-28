@@ -24,10 +24,15 @@ use clap::Subcommand;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
-    /// Set the directory of lemon launcher config
-    /// [default: $LL_CONFIG_HOME or $XDG_CONFIG_HOME/lemon-launcher]
-    #[arg(short, verbatim_doc_comment)]
-    pub data_dir: Option<PathBuf>,
+    /// Path to lemon launcher config file
+    /// [default: $LL_CONFIG_HOME/config.toml or $XDG_CONFIG_HOME/lemon-launcher/config.toml]
+    #[arg(long, verbatim_doc_comment)]
+    pub config: Option<PathBuf>,
+
+    /// Path to menu file
+    /// [default: $LL_CONFIG_HOME/menu.toml or $XDG_CONFIG_HOME/lemon-launcher/menu.toml]
+    #[arg(long, verbatim_doc_comment)]
+    pub menu: Option<PathBuf>,
 
     #[command(subcommand)]
     pub command: Option<Commands>

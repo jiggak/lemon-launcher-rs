@@ -47,9 +47,7 @@ use renderer::Renderer;
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    if let Some(dir) = cli.data_dir {
-        env::set_config_dir(dir.to_str().unwrap());
-    }
+    env::init(cli.config.as_ref(), cli.menu.as_ref())?;
 
     let config = LemonConfig::load_config(&env::get_config_path())?;
 
@@ -67,7 +65,7 @@ fn main() -> Result<()> {
 }
 
 fn launch(config: LemonConfig) -> Result<()> {
-    let menu_config = MenuConfig::load_config(env::get_menu_path())?;
+    let menu_config = MenuConfig::load_config(&env::get_menu_path())?;
     let menu = LemonMenu::new(menu_config, config.mame.clone());
     let keymap = Keymap::load(env::get_keymap_path())?;
 

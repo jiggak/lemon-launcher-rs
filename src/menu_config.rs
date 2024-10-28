@@ -20,7 +20,7 @@ use anyhow::Result;
 use serde::Deserialize;
 use std::{collections::HashMap, fs, path::{Path, PathBuf}};
 
-use crate::rom_library::Rom;
+use crate::{lemon_launcher::ConfigError, rom_library::Rom};
 
 #[derive(Deserialize)]
 pub struct MenuConfig {
@@ -30,20 +30,13 @@ pub struct MenuConfig {
 }
 
 impl MenuConfig {
-    pub fn load_config(file_path: impl AsRef<Path>) -> Result<Self, MenuError> {
-        let toml_src = fs::read_to_string(file_path)?;
+    pub fn load_config(file_path: impl AsRef<Path> + Copy) -> Result<Self, ConfigError> {
+        let toml_src = fs::read_to_string(file_path)
+            .map_err(|e| ConfigError::io(file_path.as_ref(), e))?;
         let config:MenuConfig = toml::from_str(&toml_src)?;
 
         Ok(config)
     }
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum MenuError {
-    #[error("Unable to read menu file")]
-    Io(#[from] std::io::Error),
-    #[error("Invalid menu file syntax/format")]
-    Format(#[from] toml::de::Error)
 }
 
 #[derive(Deserialize, Clone)]
