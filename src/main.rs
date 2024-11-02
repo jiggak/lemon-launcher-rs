@@ -35,6 +35,7 @@ use std::path::PathBuf;
 use anyhow::{Error, Result};
 use cli::{Cli, Commands, Parser};
 
+use env::Env;
 use keymap::Keymap;
 use lemon_config::{Font, LemonConfig, Size};
 use lemon_keymap::LemonKeymap;
@@ -47,16 +48,16 @@ use renderer::Renderer;
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    env::init(cli.config.as_ref(), cli.menu.as_ref())?;
+    let env = Env::load_from_cli(&cli)?;
 
-    let config = LemonConfig::load_config(&env::get_config_path())?;
+    let config = LemonConfig::load_config(&env.get_config_path())?;
 
     match cli.command {
         Some(Commands::Scan { mame_xml, genre_ini, roms_dir }) => {
             scan::scan(&mame_xml, &genre_ini, &roms_dir)
         },
         Some(Commands::Keymap { file_path }) => {
-            launch_keymap(config, file_path.unwrap_or_else(|| env::get_keymap_path()))
+            launch_keymap(config, file_path.unwrap_or_else(|| env.get_keymap_path()))
         },
         None | Some(Commands::Launch) => {
             launch(config)
@@ -65,9 +66,11 @@ fn main() -> Result<()> {
 }
 
 fn launch(config: LemonConfig) -> Result<()> {
-    let menu_config = MenuConfig::load_config(&env::get_menu_path())?;
+    let env = Env::load();
+
+    let menu_config = MenuConfig::load_config(&env.get_menu_path())?;
     let menu = LemonMenu::new(menu_config, config.mame.clone());
-    let keymap = Keymap::load(env::get_keymap_path())?;
+    let keymap = Keymap::load(env.get_keymap_path())?;
 
     let screen_size = config.size.clone();
     let ui_size = config.get_ui_size().clone();

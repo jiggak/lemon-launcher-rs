@@ -21,7 +21,7 @@ use sdl2::rect::Rect;
 use serde::Deserialize;
 use std::{fs, path::{Path, PathBuf}};
 
-use crate::{env, lemon_launcher::ConfigError};
+use crate::{env::Env, lemon_launcher::ConfigError};
 
 #[derive(Deserialize)]
 pub struct LemonConfig {
@@ -62,7 +62,8 @@ pub struct Font {
 
 impl Font {
     pub fn get_font_path(&self) -> PathBuf {
-        env::get_config_file_path(&self.file)
+        let env = Env::load();
+        env.get_config_file_path(&self.file)
     }
 }
 
@@ -70,12 +71,6 @@ impl Font {
 pub struct Background {
     pub image: Option<PathBuf>,
     pub colour: Option<Color>
-}
-
-impl Background {
-    pub fn get_iamge_path(&self) -> Option<PathBuf> {
-        self.image.as_ref().map(|p| env::get_config_file_path(p))
-    }
 }
 
 #[derive(Deserialize, Clone)]

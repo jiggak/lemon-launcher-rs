@@ -22,7 +22,7 @@ use anyhow::Result;
 use sdl2::{keyboard::Keycode, rect::Rect};
 
 use crate::{
-    env, keymap::{Action, SdlKeycodeToAction},
+    env::Env, keymap::{Action, SdlKeycodeToAction},
     lemon_config::{LemonConfig, ScreenshotWidget, TextWidget, WidgetContent, WidgetField},
     lemon_menu::LemonMenu,
     lemon_screen::{EventReply, LemonScreen},
@@ -32,13 +32,14 @@ use crate::{
 pub struct LemonLauncher {
     config: LemonConfig,
     menu: LemonMenu,
-    keymap: SdlKeycodeToAction
+    keymap: SdlKeycodeToAction,
+    env: Env
 }
 
 impl LemonLauncher {
     pub fn new(config: LemonConfig, menu: LemonMenu, keymap: SdlKeycodeToAction) -> Self {
         LemonLauncher {
-            config, menu, keymap
+            config, menu, keymap, env: Env::load()
         }
     }
 
@@ -64,8 +65,9 @@ impl LemonLauncher {
                 renderer.draw_background(colour);
             }
 
-            if let Some(image) = background.get_iamge_path() {
-                renderer.draw_background_image(&image)?;
+            if let Some(image) = &background.image {
+                let image_path = self.env.get_config_file_path(image);
+                renderer.draw_background_image(&image_path)?;
             }
         }
 
@@ -125,7 +127,7 @@ impl LemonLauncher {
                     self.draw_favourite_widget(renderer, widget.get_rect(), yes_image)?;
                 },
                 WidgetContent::Image { image } => {
-                    let image_path = env::get_config_file_path(image);
+                    let image_path = self.env.get_config_file_path(image);
                     renderer.draw_image(&image_path, widget.get_rect())?;
                 },
                 WidgetContent::Screenshot(screenshot) => {
@@ -173,7 +175,7 @@ impl LemonLauncher {
             };
 
             if let Some(image_path) = image_path {
-                let image_path = env::get_config_file_path(image_path);
+                let image_path = self.env.get_config_file_path(image_path);
                 renderer.draw_image(&image_path, dest)?;
             }
         }
@@ -190,7 +192,7 @@ impl LemonLauncher {
             let screenshot = config.dir.join(screenshot);
             if screenshot.exists() {
                 if let Some(background) = &config.background {
-                    let background = env::get_config_file_path(background);
+                    let background = self.env.get_config_file_path(background);
                     renderer.draw_image(&background, dest)?;
                 }
 

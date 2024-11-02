@@ -22,7 +22,7 @@ use anyhow::Result;
 use fallible_iterator::FallibleIterator;
 use rusqlite::{params, Connection, Params};
 
-use crate::env;
+use crate::env::Env;
 
 pub struct RomLibrary {
     db: Connection
@@ -40,7 +40,8 @@ pub struct Rom {
 
 impl RomLibrary {
     pub fn open() -> Result<Self> {
-        Self::open_file(env::get_rom_lib_path())
+        let env = Env::load();
+        Self::open_file(env.get_rom_lib_path())
     }
 
     pub fn open_file(db_file: impl AsRef<Path>) -> Result<Self> {
