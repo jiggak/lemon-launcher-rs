@@ -36,11 +36,11 @@ use cli::{Cli, Commands, Parser};
 
 use env::Env;
 use keymap::Keymap;
-use lemon_config::LemonConfig;
+use lemon_config::{LemonConfig, Size};
 use lemon_keymap::LemonKeymap;
 use lemon_launcher::LemonLauncher;
 use lemon_menu::LemonMenu;
-use lemon_screen::LemonScreen;
+use lemon_screen::{EventReply, LemonScreen};
 use menu_config::MenuConfig;
 use renderer::Renderer;
 
@@ -59,7 +59,7 @@ fn main() -> Result<()> {
             let keymap_path = file_path.unwrap_or_else(|| env.get_keymap_path());
 
             let ctx = SdlContext::init(&config)?;
-            let app = LemonKeymap::new(keymap_path);
+            let app = LemonKeymap::new(&config, keymap_path);
 
             main_loop(ctx, app)
         },
@@ -78,7 +78,9 @@ fn main() -> Result<()> {
 
 struct SdlContext {
     context: sdl2::Sdl,
-    renderer: Renderer
+    renderer: Option<Renderer>,
+    screen_size: Size,
+    ui_size: Size
 }
 
 impl SdlContext {
@@ -86,25 +88,46 @@ impl SdlContext {
         let context = sdl2::init()
             .map_err(|e| Error::msg(e))?;
 
+        context.mouse()
+            .show_cursor(false);
+
         sdl2::image::init(sdl2::image::InitFlag::PNG | sdl2::image::InitFlag::JPG)
             .map_err(|e| Error::msg(e))?;
 
-        let window = context.video()
+        let mut sdl = Self {
+            context,
+            renderer: None,
+            screen_size: config.size.clone(),
+            ui_size: config.get_ui_size()
+        };
+
+        sdl.renderer = Some(sdl.create_renderer()?);
+
+        Ok(sdl)
+    }
+
+    fn create_renderer(&mut self) -> Result<Renderer> {
+        let window = self.context.video()
             .map_err(|e| Error::msg(e))?
-            .window("Lemon Launcher", config.size.width, config.size.height)
+            .window("Lemon Launcher", self.screen_size.width, self.screen_size.height)
             .resizable()
             .position_centered()
             .opengl()
             .build()?;
 
-        context.mouse()
-            .show_cursor(false);
+        Renderer::new(window, &self.ui_size)
+    }
 
-        let renderer = Renderer::new(window, config.get_ui_size())?;
+    fn close_window(&mut self) {
+        self.renderer = None
+    }
 
-        Ok(Self {
-            context, renderer
-        })
+    fn renderer(&mut self) -> Result<&mut Renderer> {
+        if self.renderer.is_none() {
+            self.renderer = Some(self.create_renderer()?)
+        }
+
+        Ok(self.renderer.as_mut().unwrap())
     }
 }
 
@@ -114,12 +137,13 @@ fn main_loop(mut sdl: SdlContext, mut app: impl LemonScreen) -> Result<()> {
 
     loop {
         let event = event_pump.wait_event();
-        sdl = match app.handle_event(sdl, &event)? {
-            Some(sdl) => sdl,
-            None => break
-        };
+        match app.handle_event(&mut sdl, &event) {
+            Ok(EventReply::Exit) => break,
+            Err(e) => return Err(e),
+            _ => ()
+        }
 
-        app.draw(&mut sdl.renderer)?;
+        app.draw(sdl.renderer()?)?;
     }
 
     Ok(())

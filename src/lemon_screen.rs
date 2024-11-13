@@ -24,15 +24,21 @@ use crate::{renderer::Renderer, SdlContext};
 pub trait LemonScreen {
     fn draw(&self, renderer: &mut Renderer) -> Result<()>;
 
-    fn handle_keycode(&mut self, ctx: SdlContext, keycode: &Keycode) -> Result<Option<SdlContext>>;
+    fn handle_keycode(&mut self, ctx: &mut SdlContext, keycode: &Keycode) -> Result<EventReply>;
 
-    fn handle_event(&mut self, ctx: SdlContext, event: &Event) -> Result<Option<SdlContext>> {
+    fn handle_event(&mut self, ctx: &mut SdlContext, event: &Event) -> Result<EventReply> {
         match event {
-            Event::Quit { .. } => Ok(None),
+            Event::Quit { .. } => Ok(EventReply::Exit),
             Event::KeyDown { keycode: Some(keycode), .. } => {
                 self.handle_keycode(ctx, keycode)
             }
-            _ => Ok(Some(ctx))
+            _ => Ok(EventReply::Unhandled)
         }
     }
+}
+
+pub enum EventReply {
+    Handled,
+    Unhandled,
+    Exit
 }

@@ -44,9 +44,10 @@ impl LemonConfig {
         Ok(config)
     }
 
-    pub fn get_ui_size(&self) -> &Size {
+    pub fn get_ui_size(&self) -> Size {
         self.ui_size.as_ref()
             .unwrap_or(&self.size)
+            .clone()
     }
 }
 
@@ -54,7 +55,7 @@ fn default_field_template() -> String {
     String::from("{}")
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Font {
     pub file: PathBuf,
     pub size: u16
@@ -114,7 +115,7 @@ impl From<(i32, i32)> for Point {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Size {
     pub width: u32,
     pub height: u32

@@ -22,18 +22,19 @@ use anyhow::Result;
 use sdl2::{keyboard::Keycode, pixels::Color, rect::Rect};
 
 use crate::{
-    keymap::{Action, ActionToKeycode, Keymap}, lemon_config::{Font, Justify},
-    lemon_screen::LemonScreen, renderer::Renderer, SdlContext
+    keymap::{Action, ActionToKeycode, Keymap}, lemon_config::{Font, Justify, LemonConfig},
+    lemon_screen::{EventReply, LemonScreen}, renderer::Renderer, SdlContext
 };
 
 pub struct LemonKeymap {
     file_path: PathBuf,
     actions: VecDeque<Action>,
-    keymap: ActionToKeycode
+    keymap: ActionToKeycode,
+    font: Font
 }
 
 impl LemonKeymap {
-    pub fn new(file_path: PathBuf) -> Self {
+    pub fn new(config: &LemonConfig, file_path: PathBuf) -> Self {
         let actions = vec![
             Action::CursorUp,
             Action::CursorDown,
@@ -47,7 +48,8 @@ impl LemonKeymap {
         Self {
             file_path,
             actions: actions.into(),
-            keymap: ActionToKeycode::new()
+            keymap: ActionToKeycode::new(),
+            font: config.font.clone()
         }
     }
 }
@@ -64,17 +66,14 @@ impl LemonScreen for LemonKeymap {
         let dest = Rect::new(0, 0, screen_size.width, 20)
             .centered_on(screen_rect.center());
 
-        // FIXME use font from config
-        let font = Font { file: "foo.ttf".into(), size: 20 };
-
-        renderer.draw_text(&font, text, Color::WHITE, dest, &Justify::Center)?;
+        renderer.draw_text(&self.font, text, Color::WHITE, dest, &Justify::Center)?;
 
         renderer.present();
 
         Ok(())
     }
 
-    fn handle_keycode(&mut self, ctx: SdlContext, keycode: &Keycode) -> Result<Option<SdlContext>> {
+    fn handle_keycode(&mut self, _ctx: &mut SdlContext, keycode: &Keycode) -> Result<EventReply> {
         let action = self.actions.pop_front().unwrap();
         self.keymap.insert(action, (*keycode).into());
 
@@ -82,9 +81,9 @@ impl LemonScreen for LemonKeymap {
             Keymap::save(&self.keymap, &self.file_path)?;
             println!("Saved keymap to {:?}", self.file_path);
 
-            Ok(None)
+            Ok(EventReply::Exit)
         } else {
-            Ok(Some(ctx))
+            Ok(EventReply::Handled)
         }
     }
 }

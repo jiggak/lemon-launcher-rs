@@ -26,7 +26,7 @@ use crate::{
     keymap::{Action, SdlKeycodeToAction},
     lemon_config::{LemonConfig, MameCommand, ScreenshotWidget, TextWidget, WidgetContent, WidgetField},
     lemon_menu::LemonMenu,
-    lemon_screen::LemonScreen,
+    lemon_screen::{EventReply, LemonScreen},
     menu_config::MenuEntryAction,
     renderer::Renderer,
     rom_library::RomLibrary, SdlContext
@@ -46,7 +46,7 @@ impl LemonLauncher {
         }
     }
 
-    fn handle_action(&mut self, ctx: SdlContext, action: &Action) -> Result<Option<SdlContext>> {
+    fn handle_action(&mut self, ctx: &mut SdlContext, action: &Action) -> Result<EventReply> {
         let row_count = self.config.menu.get_row_count();
 
         match action {
@@ -59,10 +59,10 @@ impl LemonLauncher {
             Action::Favourite => self.menu.toggle_favourite()?
         }
 
-        Ok(Some(ctx))
+        Ok(EventReply::Handled)
     }
 
-    fn handle_select(&mut self, mut ctx: SdlContext) -> Result<Option<SdlContext>> {
+    fn handle_select(&mut self, ctx: &mut SdlContext) -> Result<EventReply> {
         if let Some(entry) = self.menu.selected() {
             let action = entry.action.clone();
             match action {
@@ -70,7 +70,7 @@ impl LemonLauncher {
                     self.menu.open_menu(&menu);
                 },
                 MenuEntryAction::BuiltIn(_) => {
-                    return Ok(None);
+                    return Ok(EventReply::Exit);
                 },
                 MenuEntryAction::Query(query) => {
                     self.menu.open_query(&query)?;
@@ -82,16 +82,15 @@ impl LemonLauncher {
                     let rom_lib = RomLibrary::open()?;
                     rom_lib.inc_play_count(&rom)?;
 
-                    drop(ctx);
+                    // Close window to let mame use the Linux framebuffer
+                    ctx.close_window();
 
                     self.config.mame.exec(&rom, params.as_ref())?;
-
-                    ctx = SdlContext::init(&self.config)?;
                 }
             }
         }
 
-        Ok(Some(ctx))
+        Ok(EventReply::Handled)
     }
 
     fn draw_background(&self, renderer: &mut Renderer) -> Result<()> {
@@ -256,12 +255,12 @@ impl LemonScreen for LemonLauncher {
         Ok(())
     }
 
-    fn handle_keycode(&mut self, ctx: SdlContext, keycode: &Keycode) -> Result<Option<SdlContext>> {
+    fn handle_keycode(&mut self, ctx: &mut SdlContext, keycode: &Keycode) -> Result<EventReply> {
         if let Some(action) = self.keymap.get(keycode) {
             // FIXME this clone shouldn't be necessary
             self.handle_action(ctx, &action.clone())
         } else {
-            Ok(Some(ctx))
+            Ok(EventReply::Unhandled)
         }
     }
 }
