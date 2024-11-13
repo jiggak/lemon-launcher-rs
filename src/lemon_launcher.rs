@@ -16,17 +16,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::PathBuf;
+use std::{io, path::PathBuf, process::Command};
 
 use anyhow::Result;
 use sdl2::{keyboard::Keycode, rect::Rect};
 
 use crate::{
-    env::Env, keymap::{Action, SdlKeycodeToAction},
-    lemon_config::{LemonConfig, ScreenshotWidget, TextWidget, WidgetContent, WidgetField},
+    env::Env,
+    keymap::{Action, SdlKeycodeToAction},
+    lemon_config::{LemonConfig, MameCommand, ScreenshotWidget, TextWidget, WidgetContent, WidgetField},
     lemon_menu::LemonMenu,
-    lemon_screen::{EventReply, LemonScreen},
-    renderer::Renderer
+    lemon_screen::LemonScreen,
+    menu_config::MenuEntryAction,
+    renderer::Renderer,
+    rom_library::RomLibrary, SdlContext
 };
 
 pub struct LemonLauncher {
@@ -43,7 +46,7 @@ impl LemonLauncher {
         }
     }
 
-    fn handle_action(&mut self, action: &Action) -> Result<EventReply> {
+    fn handle_action(&mut self, ctx: SdlContext, action: &Action) -> Result<Option<SdlContext>> {
         let row_count = self.config.menu.get_row_count();
 
         match action {
@@ -51,12 +54,44 @@ impl LemonLauncher {
             Action::PageUp => self.menu.move_cursor(-row_count),
             Action::CursorDown => self.menu.move_cursor(1),
             Action::PageDown => self.menu.move_cursor(row_count),
-            Action::Select => return self.menu.activate(),
+            Action::Select => return self.handle_select(ctx),
             Action::Back => self.menu.back(),
             Action::Favourite => self.menu.toggle_favourite()?
         }
 
-        Ok(EventReply::Handled)
+        Ok(Some(ctx))
+    }
+
+    fn handle_select(&mut self, mut ctx: SdlContext) -> Result<Option<SdlContext>> {
+        if let Some(entry) = self.menu.selected() {
+            let action = entry.action.clone();
+            match action {
+                MenuEntryAction::Menu { menu } => {
+                    self.menu.open_menu(&menu);
+                },
+                MenuEntryAction::BuiltIn(_) => {
+                    return Ok(None);
+                },
+                MenuEntryAction::Query(query) => {
+                    self.menu.open_query(&query)?;
+                },
+                MenuEntryAction::Exec { exec, args } => {
+                    exec_command(&exec, args.as_ref())?
+                },
+                MenuEntryAction::Rom { rom, params } => {
+                    let rom_lib = RomLibrary::open()?;
+                    rom_lib.inc_play_count(&rom)?;
+
+                    drop(ctx);
+
+                    self.config.mame.exec(&rom, params.as_ref())?;
+
+                    ctx = SdlContext::init(&self.config)?;
+                }
+            }
+        }
+
+        Ok(Some(ctx))
     }
 
     fn draw_background(&self, renderer: &mut Renderer) -> Result<()> {
@@ -98,7 +133,7 @@ impl LemonLauncher {
                 false => text_color
             };
 
-            renderer.draw_text(&entry.title, color, row_rect, justify)?;
+            renderer.draw_text(&self.config.font, &entry.title, color, row_rect, justify)?;
             row_rect = row_rect.bottom_shifted(line_height as i32);
         }
 
@@ -110,7 +145,7 @@ impl LemonLauncher {
         );
 
         for entry in self.menu.iter_rev().take(top_rows as usize) {
-            renderer.draw_text(&entry.title, text_color, row_rect, justify)?;
+            renderer.draw_text(&self.config.font, &entry.title, text_color, row_rect, justify)?;
             row_rect = row_rect.top_shifted(line_height as i32);
         }
 
@@ -155,7 +190,7 @@ impl LemonLauncher {
                 let text_color = config.text_color
                     .unwrap_or(self.config.menu.text_color);
 
-                renderer.draw_text(text, text_color, dest, &config.justify)?;
+                renderer.draw_text(&self.config.font, text, text_color, dest, &config.justify)?;
             }
         }
 
@@ -221,12 +256,12 @@ impl LemonScreen for LemonLauncher {
         Ok(())
     }
 
-    fn handle_keycode(&mut self, keycode: &Keycode) -> Result<EventReply> {
+    fn handle_keycode(&mut self, ctx: SdlContext, keycode: &Keycode) -> Result<Option<SdlContext>> {
         if let Some(action) = self.keymap.get(keycode) {
             // FIXME this clone shouldn't be necessary
-            self.handle_action(&action.clone())
+            self.handle_action(ctx, &action.clone())
         } else {
-            Ok(EventReply::Unhandled)
+            Ok(Some(ctx))
         }
     }
 }
@@ -242,5 +277,37 @@ pub enum ConfigError {
 impl ConfigError {
     pub fn io(file_path: &std::path::Path, error: std::io::Error) -> Self {
         ConfigError::Io(file_path.to_path_buf(), error)
+    }
+}
+
+fn exec_command(cmd: &String, args: Option<&Vec<String>>) -> io::Result<()> {
+    let mut cmd = Command::new(cmd);
+
+    if let Some(args) = args {
+        cmd.args(args);
+    }
+
+    cmd.spawn()?;
+
+    Ok(())
+}
+
+impl MameCommand {
+    pub fn exec(&self, rom: &String, rom_params: Option<&String>) -> io::Result<()> {
+        let mut cmd = Command::new(&self.cmd);
+
+        if let Some(args) = &self.args {
+            cmd.args(args);
+        }
+
+        if let Some(args) = rom_params {
+            cmd.arg(args);
+        }
+
+        cmd.arg(rom);
+
+        cmd.spawn()?.wait()?;
+
+        Ok(())
     }
 }

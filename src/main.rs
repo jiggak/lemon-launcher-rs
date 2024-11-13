@@ -18,6 +18,7 @@
 
 mod cli;
 mod env;
+mod font_manager;
 mod keymap;
 mod lemon_config;
 mod lemon_keymap;
@@ -30,18 +31,16 @@ mod renderer;
 mod rom_library;
 mod scan;
 
-use std::path::PathBuf;
-
 use anyhow::{Error, Result};
 use cli::{Cli, Commands, Parser};
 
 use env::Env;
 use keymap::Keymap;
-use lemon_config::{Font, LemonConfig, Size};
+use lemon_config::LemonConfig;
 use lemon_keymap::LemonKeymap;
 use lemon_launcher::LemonLauncher;
 use lemon_menu::LemonMenu;
-use lemon_screen::{EventReply, LemonScreen};
+use lemon_screen::LemonScreen;
 use menu_config::MenuConfig;
 use renderer::Renderer;
 
@@ -57,74 +56,70 @@ fn main() -> Result<()> {
             scan::scan(&mame_xml, &genre_ini, &roms_dir)
         },
         Some(Commands::Keymap { file_path }) => {
-            launch_keymap(config, file_path.unwrap_or_else(|| env.get_keymap_path()))
+            let keymap_path = file_path.unwrap_or_else(|| env.get_keymap_path());
+
+            let ctx = SdlContext::init(&config)?;
+            let app = LemonKeymap::new(keymap_path);
+
+            main_loop(ctx, app)
         },
         None | Some(Commands::Launch) => {
-            launch(config)
+            let menu_config = MenuConfig::load_config(&env.get_menu_path())?;
+            let menu = LemonMenu::new(menu_config);
+            let keymap = Keymap::load(env.get_keymap_path())?;
+
+            let ctx = SdlContext::init(&config)?;
+            let app = LemonLauncher::new(config, menu, keymap.into());
+
+            main_loop(ctx, app)
         }
     }
 }
 
-fn launch(config: LemonConfig) -> Result<()> {
-    let env = Env::load();
-
-    let menu_config = MenuConfig::load_config(&env.get_menu_path())?;
-    let menu = LemonMenu::new(menu_config, config.mame.clone());
-    let keymap = Keymap::load(env.get_keymap_path())?;
-
-    let screen_size = config.size.clone();
-    let ui_size = config.get_ui_size().clone();
-    let font = config.font.clone();
-    let app = LemonLauncher::new(config, menu, keymap.into());
-
-    launch_ui(&screen_size, &ui_size, &font, app)
+struct SdlContext {
+    context: sdl2::Sdl,
+    renderer: Renderer
 }
 
-fn launch_keymap(config: LemonConfig, file_path: PathBuf) -> Result<()> {
-    let app = LemonKeymap::new(file_path);
+impl SdlContext {
+    fn init(config: &LemonConfig) -> Result<Self> {
+        let context = sdl2::init()
+            .map_err(|e| Error::msg(e))?;
 
-    launch_ui(&config.size, config.get_ui_size(), &config.font, app)
+        sdl2::image::init(sdl2::image::InitFlag::PNG | sdl2::image::InitFlag::JPG)
+            .map_err(|e| Error::msg(e))?;
+
+        let window = context.video()
+            .map_err(|e| Error::msg(e))?
+            .window("Lemon Launcher", config.size.width, config.size.height)
+            .resizable()
+            .position_centered()
+            .opengl()
+            .build()?;
+
+        context.mouse()
+            .show_cursor(false);
+
+        let renderer = Renderer::new(window, config.get_ui_size())?;
+
+        Ok(Self {
+            context, renderer
+        })
+    }
 }
 
-fn launch_ui(screen_size: &Size, ui_size: &Size, font: &Font, mut app: impl LemonScreen) -> Result<()> {
-    let sdl_context = sdl2::init()
-        .map_err(|e| Error::msg(e))?;
-
-    let _img_context = sdl2::image::init(sdl2::image::InitFlag::PNG | sdl2::image::InitFlag::JPG)
-        .map_err(|e| Error::msg(e))?;
-
-    let ttf_context = sdl2::ttf::init()?;
-    // let font_bytes = sdl2::rwops::RWops::from_bytes(include_bytes!("../config/PressStart2P-vaV7.ttf"))
-    //     .map_err(|e| Error::msg(e))?;
-    // let font = ttf_context.load_font_from_rwops(font_bytes, font.size)
-    let font = ttf_context.load_font(&font.get_font_path(), font.size)
-        .map_err(|e| Error::msg(e))?;
-
-    let window = sdl_context.video()
-        .map_err(|e| Error::msg(e))?
-        .window("Lemon Launcher", screen_size.width, screen_size.height)
-        .resizable()
-        .position_centered()
-        .opengl()
-        .build()?;
-
-    sdl_context.mouse()
-        .show_cursor(false);
-
-    let mut renderer = Renderer::new(font, window, ui_size)?;
-
-    let mut event_pump = sdl_context.event_pump()
+fn main_loop(mut sdl: SdlContext, mut app: impl LemonScreen) -> Result<()> {
+    let mut event_pump = sdl.context.event_pump()
         .map_err(|e| Error::msg(e))?;
 
     loop {
         let event = event_pump.wait_event();
-        match app.handle_event(&event) {
-            Ok(EventReply::Exit) => break,
-            Err(e) => return Err(e),
-            _ => ()
-        }
+        sdl = match app.handle_event(sdl, &event)? {
+            Some(sdl) => sdl,
+            None => break
+        };
 
-        app.draw(&mut renderer)?;
+        app.draw(&mut sdl.renderer)?;
     }
 
     Ok(())

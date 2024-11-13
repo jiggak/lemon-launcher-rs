@@ -54,7 +54,7 @@ fn default_field_template() -> String {
     String::from("{}")
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize)]
 pub struct Font {
     pub file: PathBuf,
     pub size: u16
@@ -73,7 +73,7 @@ pub struct Background {
     pub colour: Option<Color>
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize)]
 pub struct MameCommand {
     pub cmd: String,
     pub args: Option<Vec<String>>
@@ -114,7 +114,7 @@ impl From<(i32, i32)> for Point {
     }
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize)]
 pub struct Size {
     pub width: u32,
     pub height: u32

@@ -16,23 +16,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use anyhow::Result;
-use sdl2::{event::Event, keyboard::Keycode};
+use anyhow::{Error, Result};
 
-use crate::{renderer::Renderer, SdlContext};
+use crate::lemon_config::Font;
 
-pub trait LemonScreen {
-    fn draw(&self, renderer: &mut Renderer) -> Result<()>;
+pub struct FontManager {
+    context: sdl2::ttf::Sdl2TtfContext
+}
 
-    fn handle_keycode(&mut self, ctx: SdlContext, keycode: &Keycode) -> Result<Option<SdlContext>>;
+impl FontManager {
+    pub fn init() -> Result<Self> {
+        let context = sdl2::ttf::init()?;
+        Ok(FontManager {
+            context
+        })
+    }
 
-    fn handle_event(&mut self, ctx: SdlContext, event: &Event) -> Result<Option<SdlContext>> {
-        match event {
-            Event::Quit { .. } => Ok(None),
-            Event::KeyDown { keycode: Some(keycode), .. } => {
-                self.handle_keycode(ctx, keycode)
-            }
-            _ => Ok(Some(ctx))
-        }
+    pub fn load(&self, font: &Font) -> Result<sdl2::ttf::Font> {
+        self.context.load_font(&font.get_font_path(), font.size)
+            .map_err(|e| Error::msg(e))
     }
 }

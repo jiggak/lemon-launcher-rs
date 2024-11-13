@@ -22,8 +22,8 @@ use anyhow::Result;
 use sdl2::{keyboard::Keycode, pixels::Color, rect::Rect};
 
 use crate::{
-    keymap::{Action, ActionToKeycode, Keymap}, lemon_config::Justify,
-    lemon_screen::{EventReply, LemonScreen}, renderer::Renderer
+    keymap::{Action, ActionToKeycode, Keymap}, lemon_config::{Font, Justify},
+    lemon_screen::LemonScreen, renderer::Renderer, SdlContext
 };
 
 pub struct LemonKeymap {
@@ -61,17 +61,20 @@ impl LemonScreen for LemonKeymap {
 
         let screen_size = renderer.get_screen_size();
         let screen_rect = Rect::new(0, 0, screen_size.width, screen_size.height);
-        let dest = Rect::new(0, 0, screen_size.width, renderer.get_font_height() as u32)
+        let dest = Rect::new(0, 0, screen_size.width, 20)
             .centered_on(screen_rect.center());
 
-        renderer.draw_text(text, Color::WHITE, dest, &Justify::Center)?;
+        // FIXME use font from config
+        let font = Font { file: "foo.ttf".into(), size: 20 };
+
+        renderer.draw_text(&font, text, Color::WHITE, dest, &Justify::Center)?;
 
         renderer.present();
 
         Ok(())
     }
 
-    fn handle_keycode(&mut self, keycode: &Keycode) -> Result<EventReply> {
+    fn handle_keycode(&mut self, ctx: SdlContext, keycode: &Keycode) -> Result<Option<SdlContext>> {
         let action = self.actions.pop_front().unwrap();
         self.keymap.insert(action, (*keycode).into());
 
@@ -79,9 +82,9 @@ impl LemonScreen for LemonKeymap {
             Keymap::save(&self.keymap, &self.file_path)?;
             println!("Saved keymap to {:?}", self.file_path);
 
-            Ok(EventReply::Exit)
+            Ok(None)
         } else {
-            Ok(EventReply::Handled)
+            Ok(Some(ctx))
         }
     }
 }
