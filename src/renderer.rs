@@ -21,17 +21,17 @@ use std::{cmp::min, path::Path};
 use anyhow::{Error, Result};
 use sdl2::{
     image::LoadTexture, pixels::Color, rect::Rect,
-    render::{TextureQuery, WindowCanvas}, video::Window
+    render::{TextureQuery, WindowCanvas}, ttf::Font, video::Window
 };
-use crate::{font_manager::FontManager, lemon_config::{Font, Justify, Size}};
+use crate::lemon_config::{Justify, Size};
 
-pub struct Renderer {
-    font_manager: FontManager,
+pub struct Renderer<'ttf> {
+    font: Font<'ttf, 'static>,
     canvas: WindowCanvas
 }
 
-impl Renderer {
-    pub fn new(window: Window, canvas_size: &Size) -> Result<Self> {
+impl<'ttf> Renderer<'ttf> {
+    pub fn new(font: Font<'ttf, 'static>, window: Window, canvas_size: &Size) -> Result<Self> {
         let mut canvas = window
             .into_canvas()
             .build()?;
@@ -41,7 +41,7 @@ impl Renderer {
         canvas.set_logical_size(canvas_size.width, canvas_size.height)?;
 
         Ok(Renderer {
-            font_manager: FontManager::init()?,
+            font,
             canvas
         })
     }
@@ -52,14 +52,12 @@ impl Renderer {
 
     pub fn draw_text<S: AsRef<str>, C: Into<Color>>(
         &mut self,
-        font: &Font,
         text: S,
         color: C,
         dest: Rect,
         justify: &Justify
     ) -> Result<()> {
-        let font = self.font_manager.load(font)?;
-        let font_surface = font.render(text.as_ref())
+        let font_surface = self.font.render(text.as_ref())
             .blended(color)?;
         let texture_creator = self.canvas.texture_creator();
         let font_texture = texture_creator

@@ -29,11 +29,11 @@ use crate::{
     lemon_screen::{EventReply, LemonScreen},
     menu_config::MenuEntryAction,
     renderer::Renderer,
-    rom_library::RomLibrary, SdlContext
+    rom_library::RomLibrary, MainLoopContext
 };
 
 pub struct LemonLauncher {
-    config: LemonConfig,
+    pub config: LemonConfig,
     menu: LemonMenu,
     keymap: SdlKeycodeToAction,
     env: Env
@@ -46,7 +46,7 @@ impl LemonLauncher {
         }
     }
 
-    fn handle_action(&mut self, ctx: &mut SdlContext, action: &Action) -> Result<EventReply> {
+    fn handle_action(&mut self, ctx: &mut MainLoopContext, action: &Action) -> Result<EventReply> {
         let row_count = self.config.menu.get_row_count();
 
         match action {
@@ -62,7 +62,7 @@ impl LemonLauncher {
         Ok(EventReply::Handled)
     }
 
-    fn handle_select(&mut self, ctx: &mut SdlContext) -> Result<EventReply> {
+    fn handle_select(&mut self, ctx: &mut MainLoopContext) -> Result<EventReply> {
         if let Some(entry) = self.menu.selected() {
             let action = entry.action.clone();
             match action {
@@ -132,7 +132,7 @@ impl LemonLauncher {
                 false => text_color
             };
 
-            renderer.draw_text(&self.config.font, &entry.title, color, row_rect, justify)?;
+            renderer.draw_text(&entry.title, color, row_rect, justify)?;
             row_rect = row_rect.bottom_shifted(line_height as i32);
         }
 
@@ -144,7 +144,7 @@ impl LemonLauncher {
         );
 
         for entry in self.menu.iter_rev().take(top_rows as usize) {
-            renderer.draw_text(&self.config.font, &entry.title, text_color, row_rect, justify)?;
+            renderer.draw_text(&entry.title, text_color, row_rect, justify)?;
             row_rect = row_rect.top_shifted(line_height as i32);
         }
 
@@ -189,7 +189,7 @@ impl LemonLauncher {
                 let text_color = config.text_color
                     .unwrap_or(self.config.menu.text_color);
 
-                renderer.draw_text(&self.config.font, text, text_color, dest, &config.justify)?;
+                renderer.draw_text(text, text_color, dest, &config.justify)?;
             }
         }
 
@@ -255,7 +255,7 @@ impl LemonScreen for LemonLauncher {
         Ok(())
     }
 
-    fn handle_keycode(&mut self, ctx: &mut SdlContext, keycode: &Keycode) -> Result<EventReply> {
+    fn handle_keycode(&mut self, ctx: &mut MainLoopContext, keycode: &Keycode) -> Result<EventReply> {
         if let Some(action) = self.keymap.get(keycode) {
             // FIXME this clone shouldn't be necessary
             self.handle_action(ctx, &action.clone())

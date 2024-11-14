@@ -23,7 +23,7 @@ use std::{fs, path::{Path, PathBuf}};
 
 use crate::{env::Env, lemon_launcher::ConfigError};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct LemonConfig {
     pub size: Size,
     pub ui_size: Option<Size>,
@@ -68,19 +68,19 @@ impl Font {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Background {
     pub image: Option<PathBuf>,
     pub colour: Option<Color>
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct MameCommand {
     pub cmd: String,
     pub args: Option<Vec<String>>
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct LemonMenuConfig {
     pub focus_offset: u32,
     pub line_height: u32,
@@ -103,7 +103,7 @@ impl LemonMenuConfig {
 
 pub type Color = (u8, u8, u8);
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Point {
     pub x: i32,
     pub y: i32
@@ -127,7 +127,7 @@ impl From<(u32, u32)> for Size {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub enum Justify {
     #[serde(rename = "left")]
     Left,
@@ -141,7 +141,7 @@ impl Default for Justify {
     fn default() -> Self { Justify::Left }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Widget {
     pub position: Point,
     pub size: Size,
@@ -154,7 +154,7 @@ impl Widget {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub enum WidgetField {
     #[serde(rename = "year")]
     Year,
@@ -162,7 +162,7 @@ pub enum WidgetField {
     Manufacturer
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(tag = "type")]
 pub enum WidgetContent {
     #[serde(rename = "text")]
@@ -179,7 +179,7 @@ pub enum WidgetContent {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct TextWidget {
     pub field: WidgetField,
     #[serde(default = "default_field_template")]
@@ -189,7 +189,7 @@ pub struct TextWidget {
     pub justify: Justify
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct ScreenshotWidget {
     pub dir: PathBuf,
     pub background: Option<PathBuf>,

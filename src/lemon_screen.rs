@@ -19,14 +19,14 @@
 use anyhow::Result;
 use sdl2::{event::Event, keyboard::Keycode};
 
-use crate::{renderer::Renderer, SdlContext};
+use crate::{renderer::Renderer, MainLoopContext};
 
 pub trait LemonScreen {
     fn draw(&self, renderer: &mut Renderer) -> Result<()>;
 
-    fn handle_keycode(&mut self, ctx: &mut SdlContext, keycode: &Keycode) -> Result<EventReply>;
+    fn handle_keycode(&mut self, ctx: &mut MainLoopContext, keycode: &Keycode) -> Result<EventReply>;
 
-    fn handle_event(&mut self, ctx: &mut SdlContext, event: &Event) -> Result<EventReply> {
+    fn handle_event(&mut self, ctx: &mut MainLoopContext, event: &Event) -> Result<EventReply> {
         match event {
             Event::Quit { .. } => Ok(EventReply::Exit),
             Event::KeyDown { keycode: Some(keycode), .. } => {

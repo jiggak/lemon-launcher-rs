@@ -22,19 +22,18 @@ use anyhow::Result;
 use sdl2::{keyboard::Keycode, pixels::Color, rect::Rect};
 
 use crate::{
-    keymap::{Action, ActionToKeycode, Keymap}, lemon_config::{Font, Justify, LemonConfig},
-    lemon_screen::{EventReply, LemonScreen}, renderer::Renderer, SdlContext
+    keymap::{Action, ActionToKeycode, Keymap}, lemon_config::Justify,
+    lemon_screen::{EventReply, LemonScreen}, renderer::Renderer, MainLoopContext
 };
 
 pub struct LemonKeymap {
     file_path: PathBuf,
     actions: VecDeque<Action>,
-    keymap: ActionToKeycode,
-    font: Font
+    keymap: ActionToKeycode
 }
 
 impl LemonKeymap {
-    pub fn new(config: &LemonConfig, file_path: PathBuf) -> Self {
+    pub fn new(file_path: PathBuf) -> Self {
         let actions = vec![
             Action::CursorUp,
             Action::CursorDown,
@@ -48,8 +47,7 @@ impl LemonKeymap {
         Self {
             file_path,
             actions: actions.into(),
-            keymap: ActionToKeycode::new(),
-            font: config.font.clone()
+            keymap: ActionToKeycode::new()
         }
     }
 }
@@ -66,14 +64,14 @@ impl LemonScreen for LemonKeymap {
         let dest = Rect::new(0, 0, screen_size.width, 20)
             .centered_on(screen_rect.center());
 
-        renderer.draw_text(&self.font, text, Color::WHITE, dest, &Justify::Center)?;
+        renderer.draw_text(text, Color::WHITE, dest, &Justify::Center)?;
 
         renderer.present();
 
         Ok(())
     }
 
-    fn handle_keycode(&mut self, _ctx: &mut SdlContext, keycode: &Keycode) -> Result<EventReply> {
+    fn handle_keycode(&mut self, _ctx: &mut MainLoopContext, keycode: &Keycode) -> Result<EventReply> {
         let action = self.actions.pop_front().unwrap();
         self.keymap.insert(action, (*keycode).into());
 
