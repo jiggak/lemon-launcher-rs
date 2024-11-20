@@ -30,8 +30,6 @@ mod renderer;
 mod rom_library;
 mod scan;
 
-use std::path::PathBuf;
-
 use anyhow::{Error, Result};
 use cli::{Cli, Commands, Parser};
 
@@ -57,46 +55,41 @@ fn main() -> Result<()> {
             scan::scan(&mame_xml, &genre_ini, &roms_dir)
         },
         Some(Commands::Keymap { file_path }) => {
-            launch_keymap(config, file_path.unwrap_or_else(|| env.get_keymap_path()))
+            let keymap_path = file_path.unwrap_or_else(|| env.get_keymap_path());
+
+            let app = LemonKeymap::new(keymap_path);
+
+            main_loop(&config, app)
         },
         None | Some(Commands::Launch) => {
-            launch(config)
+            let menu_config = MenuConfig::load_config(&env.get_menu_path())?;
+            let menu = LemonMenu::new(menu_config);
+            let keymap = Keymap::load(env.get_keymap_path())?;
+
+            let app = LemonLauncher::new(config.clone(), menu, keymap.into());
+
+            main_loop(&config, app)
         }
     }
 }
 
-fn launch(config: LemonConfig) -> Result<()> {
-    let env = Env::load();
-
-    let menu_config = MenuConfig::load_config(&env.get_menu_path())?;
-    let menu = LemonMenu::new(menu_config, config.mame.clone());
-    let keymap = Keymap::load(env.get_keymap_path())?;
-
-    let screen_size = config.size.clone();
-    let ui_size = config.get_ui_size().clone();
-    let font = config.font.clone();
-    let app = LemonLauncher::new(config, menu, keymap.into());
-
-    launch_ui(&screen_size, &ui_size, &font, app)
+struct MainLoopContext<'ttf> {
+    renderer: Option<Renderer<'ttf>>
 }
 
-fn launch_keymap(config: LemonConfig, file_path: PathBuf) -> Result<()> {
-    let app = LemonKeymap::new(file_path);
-
-    launch_ui(&config.size, config.get_ui_size(), &config.font, app)
+impl<'ttf> MainLoopContext<'ttf> {
+    fn close_window(&mut self) {
+        self.renderer = None
+    }
 }
 
-fn launch_ui(screen_size: &Size, ui_size: &Size, font: &Font, mut app: impl LemonScreen) -> Result<()> {
-    let sdl_context = sdl2::init()
-        .map_err(|e| Error::msg(e))?;
-
-    let _img_context = sdl2::image::init(sdl2::image::InitFlag::PNG | sdl2::image::InitFlag::JPG)
-        .map_err(|e| Error::msg(e))?;
-
-    let ttf_context = sdl2::ttf::init()?;
-    // let font_bytes = sdl2::rwops::RWops::from_bytes(include_bytes!("../config/PressStart2P-vaV7.ttf"))
-    //     .map_err(|e| Error::msg(e))?;
-    // let font = ttf_context.load_font_from_rwops(font_bytes, font.size)
+fn new_renderer<'ttf>(
+    sdl_context: &sdl2::Sdl,
+    ttf_context: &'ttf sdl2::ttf::Sdl2TtfContext,
+    screen_size: &Size,
+    ui_size: &Size,
+    font: &Font
+) -> Result<Renderer<'ttf>> {
     let font = ttf_context.load_font(&font.get_font_path(), font.size)
         .map_err(|e| Error::msg(e))?;
 
@@ -108,23 +101,52 @@ fn launch_ui(screen_size: &Size, ui_size: &Size, font: &Font, mut app: impl Lemo
         .opengl()
         .build()?;
 
-    sdl_context.mouse()
+    Renderer::new(font, window, &ui_size)
+}
+
+fn main_loop(config: &LemonConfig, mut app: impl LemonScreen) -> Result<()> {
+    let sdl = sdl2::init()
+        .map_err(|e| Error::msg(e))?;
+
+    sdl.mouse()
         .show_cursor(false);
 
-    let mut renderer = Renderer::new(font, window, ui_size)?;
-
-    let mut event_pump = sdl_context.event_pump()
+    sdl2::image::init(sdl2::image::InitFlag::PNG | sdl2::image::InitFlag::JPG)
         .map_err(|e| Error::msg(e))?;
+
+    let ttf = sdl2::ttf::init()?;
+
+    let mut event_pump = sdl.event_pump()
+        .map_err(|e| Error::msg(e))?;
+
+    let mut ctx = MainLoopContext {
+        renderer: Some(new_renderer(
+            &sdl, &ttf,
+            &config.size,
+            &config.get_ui_size(),
+            &config.font
+        )?)
+    };
 
     loop {
         let event = event_pump.wait_event();
-        match app.handle_event(&event) {
+        match app.handle_event(&mut ctx, &event) {
             Ok(EventReply::Exit) => break,
             Err(e) => return Err(e),
             _ => ()
         }
 
-        app.draw(&mut renderer)?;
+        if ctx.renderer.is_none() {
+            let renderer = new_renderer(
+                &sdl, &ttf,
+                &config.size,
+                &config.get_ui_size(),
+                &config.font
+            )?;
+            ctx.renderer = Some(renderer);
+        }
+
+        app.draw(ctx.renderer.as_mut().unwrap())?;
     }
 
     Ok(())

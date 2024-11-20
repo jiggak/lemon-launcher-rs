@@ -16,21 +16,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::path::PathBuf;
+use std::{io, path::PathBuf, process::Command};
 
 use anyhow::Result;
 use sdl2::{keyboard::Keycode, rect::Rect};
 
 use crate::{
-    env::Env, keymap::{Action, SdlKeycodeToAction},
-    lemon_config::{LemonConfig, ScreenshotWidget, TextWidget, WidgetContent, WidgetField},
+    env::Env,
+    keymap::{Action, SdlKeycodeToAction},
+    lemon_config::{LemonConfig, MameCommand, ScreenshotWidget, TextWidget, WidgetContent, WidgetField},
     lemon_menu::LemonMenu,
     lemon_screen::{EventReply, LemonScreen},
-    renderer::Renderer
+    menu_config::MenuEntryAction,
+    renderer::Renderer,
+    rom_library::RomLibrary, MainLoopContext
 };
 
 pub struct LemonLauncher {
-    config: LemonConfig,
+    pub config: LemonConfig,
     menu: LemonMenu,
     keymap: SdlKeycodeToAction,
     env: Env
@@ -43,7 +46,7 @@ impl LemonLauncher {
         }
     }
 
-    fn handle_action(&mut self, action: &Action) -> Result<EventReply> {
+    fn handle_action(&mut self, ctx: &mut MainLoopContext, action: &Action) -> Result<EventReply> {
         let row_count = self.config.menu.get_row_count();
 
         match action {
@@ -51,9 +54,40 @@ impl LemonLauncher {
             Action::PageUp => self.menu.move_cursor(-row_count),
             Action::CursorDown => self.menu.move_cursor(1),
             Action::PageDown => self.menu.move_cursor(row_count),
-            Action::Select => return self.menu.activate(),
+            Action::Select => return self.handle_select(ctx),
             Action::Back => self.menu.back(),
             Action::Favourite => self.menu.toggle_favourite()?
+        }
+
+        Ok(EventReply::Handled)
+    }
+
+    fn handle_select(&mut self, ctx: &mut MainLoopContext) -> Result<EventReply> {
+        if let Some(entry) = self.menu.selected() {
+            let action = entry.action.clone();
+            match action {
+                MenuEntryAction::Menu { menu } => {
+                    self.menu.open_menu(&menu);
+                },
+                MenuEntryAction::BuiltIn(_) => {
+                    return Ok(EventReply::Exit);
+                },
+                MenuEntryAction::Query(query) => {
+                    self.menu.open_query(&query)?;
+                },
+                MenuEntryAction::Exec { exec, args } => {
+                    exec_command(&exec, args.as_ref())?
+                },
+                MenuEntryAction::Rom { rom, params } => {
+                    let rom_lib = RomLibrary::open()?;
+                    rom_lib.inc_play_count(&rom)?;
+
+                    // Close window to let mame use the Linux framebuffer
+                    ctx.close_window();
+
+                    self.config.mame.exec(&rom, params.as_ref())?;
+                }
+            }
         }
 
         Ok(EventReply::Handled)
@@ -221,10 +255,10 @@ impl LemonScreen for LemonLauncher {
         Ok(())
     }
 
-    fn handle_keycode(&mut self, keycode: &Keycode) -> Result<EventReply> {
+    fn handle_keycode(&mut self, ctx: &mut MainLoopContext, keycode: &Keycode) -> Result<EventReply> {
         if let Some(action) = self.keymap.get(keycode) {
             // FIXME this clone shouldn't be necessary
-            self.handle_action(&action.clone())
+            self.handle_action(ctx, &action.clone())
         } else {
             Ok(EventReply::Unhandled)
         }
@@ -242,5 +276,37 @@ pub enum ConfigError {
 impl ConfigError {
     pub fn io(file_path: &std::path::Path, error: std::io::Error) -> Self {
         ConfigError::Io(file_path.to_path_buf(), error)
+    }
+}
+
+fn exec_command(cmd: &String, args: Option<&Vec<String>>) -> io::Result<()> {
+    let mut cmd = Command::new(cmd);
+
+    if let Some(args) = args {
+        cmd.args(args);
+    }
+
+    cmd.spawn()?;
+
+    Ok(())
+}
+
+impl MameCommand {
+    pub fn exec(&self, rom: &String, rom_params: Option<&String>) -> io::Result<()> {
+        let mut cmd = Command::new(&self.cmd);
+
+        if let Some(args) = &self.args {
+            cmd.args(args);
+        }
+
+        if let Some(args) = rom_params {
+            cmd.arg(args);
+        }
+
+        cmd.arg(rom);
+
+        cmd.spawn()?.wait()?;
+
+        Ok(())
     }
 }

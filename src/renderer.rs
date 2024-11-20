@@ -25,13 +25,13 @@ use sdl2::{
 };
 use crate::lemon_config::{Justify, Size};
 
-pub struct Renderer<'a, 'b> {
-    font: Font<'a, 'b>,
+pub struct Renderer<'ttf> {
+    font: Font<'ttf, 'static>,
     canvas: WindowCanvas
 }
 
-impl<'a, 'b> Renderer<'a, 'b> {
-    pub fn new(font: Font<'a, 'b>, window: Window, canvas_size: &Size) -> Result<Self> {
+impl<'ttf> Renderer<'ttf> {
+    pub fn new(font: Font<'ttf, 'static>, window: Window, canvas_size: &Size) -> Result<Self> {
         let mut canvas = window
             .into_canvas()
             .build()?;
@@ -41,16 +41,13 @@ impl<'a, 'b> Renderer<'a, 'b> {
         canvas.set_logical_size(canvas_size.width, canvas_size.height)?;
 
         Ok(Renderer {
-            font, canvas
+            font,
+            canvas
         })
     }
 
     pub fn get_screen_size(&self) -> Size {
         self.canvas.logical_size().into()
-    }
-
-    pub fn get_font_height(&self) -> i32 {
-        self.font.height()
     }
 
     pub fn draw_text<S: AsRef<str>, C: Into<Color>>(

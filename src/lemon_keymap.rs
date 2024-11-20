@@ -23,7 +23,7 @@ use sdl2::{keyboard::Keycode, pixels::Color, rect::Rect};
 
 use crate::{
     keymap::{Action, ActionToKeycode, Keymap}, lemon_config::Justify,
-    lemon_screen::{EventReply, LemonScreen}, renderer::Renderer
+    lemon_screen::{EventReply, LemonScreen}, renderer::Renderer, MainLoopContext
 };
 
 pub struct LemonKeymap {
@@ -61,7 +61,7 @@ impl LemonScreen for LemonKeymap {
 
         let screen_size = renderer.get_screen_size();
         let screen_rect = Rect::new(0, 0, screen_size.width, screen_size.height);
-        let dest = Rect::new(0, 0, screen_size.width, renderer.get_font_height() as u32)
+        let dest = Rect::new(0, 0, screen_size.width, 20)
             .centered_on(screen_rect.center());
 
         renderer.draw_text(text, Color::WHITE, dest, &Justify::Center)?;
@@ -71,7 +71,7 @@ impl LemonScreen for LemonKeymap {
         Ok(())
     }
 
-    fn handle_keycode(&mut self, keycode: &Keycode) -> Result<EventReply> {
+    fn handle_keycode(&mut self, _ctx: &mut MainLoopContext, keycode: &Keycode) -> Result<EventReply> {
         let action = self.actions.pop_front().unwrap();
         self.keymap.insert(action, (*keycode).into());
 

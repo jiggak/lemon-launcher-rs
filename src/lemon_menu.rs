@@ -16,30 +16,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{io, path::PathBuf, process::Command};
+use std::path::PathBuf;
 
 use anyhow::Result;
 
 use crate::{
-    lemon_config::MameCommand, lemon_screen::EventReply,
-    menu_config::{BuiltInAction, MenuConfig, MenuEntry, MenuEntryAction, MenuEntryDetail, Query},
+    menu_config::{MenuConfig, MenuEntry, MenuEntryAction, MenuEntryDetail, Query},
     rom_library::RomLibrary
 };
 
 pub struct LemonMenu {
     config: MenuConfig,
-    mame_cmd: MameCommand,
     entries: Vec<MenuEntry>,
     index: usize,
     history: Vec<(Vec<MenuEntry>, usize)>
 }
 
 impl LemonMenu {
-    pub fn new(config: MenuConfig, mame_cmd: MameCommand) -> Self {
+    pub fn new(config: MenuConfig) -> Self {
         let entries = config.main.entries.clone();
         LemonMenu {
             config,
-            mame_cmd,
             entries,
             index: 0,
             history: vec![]
@@ -64,34 +61,15 @@ impl LemonMenu {
             .unwrap_or_default()
     }
 
-    pub fn activate(&mut self) -> Result<EventReply> {
-        if let Some(entry) = self.selected() {
-            let action = entry.action.clone();
-            match action {
-                MenuEntryAction::Menu { menu } => {
-                    let entries = self.config.menus[&menu].entries.clone();
-                    self.set_entries(entries)
-                },
-                MenuEntryAction::BuiltIn(BuiltInAction::Exit) => {
-                    return Ok(EventReply::Exit)
-                },
-                MenuEntryAction::Query(query) => {
-                    let entries = query.exec()?;
-                    self.set_entries(entries)
-                },
-                MenuEntryAction::Exec { exec, args } => {
-                    exec_command(&exec, args.as_ref())?
-                },
-                MenuEntryAction::Rom { rom, params } => {
-                    let rom_lib = RomLibrary::open()?;
-                    rom_lib.inc_play_count(&rom)?;
+    pub fn open_menu(&mut self, menu_name: &str) {
+        let entries = self.config.menus[menu_name].entries.clone();
+        self.set_entries(entries)
+    }
 
-                    self.mame_cmd.exec(&rom, params.as_ref())?
-                }
-            }
-        }
-
-        Ok(EventReply::Handled)
+    pub fn open_query(&mut self, query: &Query) -> Result<()> {
+        let entries = query.exec()?;
+        self.set_entries(entries);
+        Ok(())
     }
 
     pub fn toggle_favourite(&mut self) -> Result<()> {
@@ -189,37 +167,5 @@ impl Query {
                 Ok(entries)
             }
         }
-    }
-}
-
-fn exec_command(cmd: &String, args: Option<&Vec<String>>) -> io::Result<()> {
-    let mut cmd = Command::new(cmd);
-
-    if let Some(args) = args {
-        cmd.args(args);
-    }
-
-    cmd.spawn()?;
-
-    Ok(())
-}
-
-impl MameCommand {
-    pub fn exec(&self, rom: &String, rom_params: Option<&String>) -> io::Result<()> {
-        let mut cmd = Command::new(&self.cmd);
-
-        if let Some(args) = &self.args {
-            cmd.args(args);
-        }
-
-        if let Some(args) = rom_params {
-            cmd.arg(args);
-        }
-
-        cmd.arg(rom);
-
-        cmd.spawn()?;
-
-        Ok(())
     }
 }
