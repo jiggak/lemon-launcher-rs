@@ -1,7 +1,7 @@
 [main]
 entries = [
    { title = "Sub Menu", action.menu = "sub_menu" },
-   { title = "Hello, World!", action.exec = "echo", action.args = ["Hello, World!"] },
+   { title = "Hello, World!", action.cmd = "echo", action.args = ["Hello, World!"] },
    { title = "Exit", action = "exit" }
 ]
 

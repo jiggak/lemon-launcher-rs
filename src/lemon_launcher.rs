@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-use std::{io, path::PathBuf, process::Command};
+use std::{io, path::PathBuf, process::{Command, ExitStatus}};
 
 use anyhow::Result;
 use sdl2::{keyboard::Keycode, rect::Rect};
@@ -24,7 +24,7 @@ use sdl2::{keyboard::Keycode, rect::Rect};
 use crate::{
     env::Env,
     keymap::{Action, SdlKeycodeToAction},
-    lemon_config::{LemonConfig, MameCommand, ScreenshotWidget, TextWidget, WidgetContent, WidgetField},
+    lemon_config::{ExecCommand, LemonConfig, ScreenshotWidget, TextWidget, WidgetContent, WidgetField},
     lemon_menu::LemonMenu,
     lemon_screen::{EventReply, LemonScreen},
     menu_config::MenuEntryAction,
@@ -75,17 +75,17 @@ impl LemonLauncher {
                 MenuEntryAction::Query(query) => {
                     self.menu.open_query(&query)?;
                 },
-                MenuEntryAction::Exec { exec, args } => {
-                    exec_command(&exec, args.as_ref())?
+                MenuEntryAction::Exec(cmd) => {
+                    cmd.exec()?;
                 },
-                MenuEntryAction::Rom { rom, params } => {
+                MenuEntryAction::Rom { rom, .. } => {
                     let rom_lib = RomLibrary::open()?;
                     rom_lib.inc_play_count(&rom)?;
 
                     // Close window to let mame use the Linux framebuffer
                     ctx.close_window();
 
-                    self.config.mame.exec(&rom, params.as_ref())?;
+                    self.config.mame.exec_with_args([&rom])?;
                 }
             }
         }
@@ -279,34 +279,35 @@ impl ConfigError {
     }
 }
 
-fn exec_command(cmd: &String, args: Option<&Vec<String>>) -> io::Result<()> {
-    let mut cmd = Command::new(cmd);
-
-    if let Some(args) = args {
-        cmd.args(args);
-    }
-
-    cmd.spawn()?;
-
-    Ok(())
-}
-
-impl MameCommand {
-    pub fn exec(&self, rom: &String, rom_params: Option<&String>) -> io::Result<()> {
+impl ExecCommand {
+    fn get_cmd(&self) -> Command {
         let mut cmd = Command::new(&self.cmd);
+
+        if let Some(env) = &self.env {
+            cmd.envs(env);
+        }
 
         if let Some(args) = &self.args {
             cmd.args(args);
         }
 
-        if let Some(args) = rom_params {
-            cmd.arg(args);
-        }
+        cmd
+    }
 
-        cmd.arg(rom);
+    pub fn exec(&self) -> io::Result<ExitStatus> {
+        let mut cmd = self.get_cmd();
+        cmd.spawn()?.wait()
+    }
 
-        cmd.spawn()?.wait()?;
+    pub fn exec_with_args<I, S>(&self, more_args: I) -> io::Result<ExitStatus>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<std::ffi::OsStr>
+    {
+        let mut cmd = self.get_cmd();
 
-        Ok(())
+        cmd.args(more_args);
+
+        cmd.spawn()?.wait()
     }
 }

@@ -5,6 +5,6 @@ entries = [
    { title = "Categories", action.query = "categories" },
    { title = "All Games", action.query = "roms" },
    { title = "Fighting Games", action = { query = "roms", genre = "Fighter" } },
-   { title = "Shutdown", action = { exec = "sudo", args = ["shutdown"] } },
+   { title = "Shutdown", action = { cmd = "sudo", args = ["shutdown"] } },
    { title = "Exit", action = "exit" }
 ]

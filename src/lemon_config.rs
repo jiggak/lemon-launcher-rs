@@ -19,7 +19,7 @@
 use anyhow::Result;
 use sdl2::rect::Rect;
 use serde::Deserialize;
-use std::{fs, path::{Path, PathBuf}};
+use std::{collections::HashMap, fs, path::{Path, PathBuf}};
 
 use crate::{env::Env, lemon_launcher::ConfigError};
 
@@ -30,7 +30,7 @@ pub struct LemonConfig {
     pub font: Font,
     pub background: Option<Background>,
     pub menu: LemonMenuConfig,
-    pub mame: MameCommand,
+    pub mame: ExecCommand,
     #[serde(default = "Vec::new")]
     pub widgets: Vec<Widget>
 }
@@ -74,9 +74,10 @@ pub struct Background {
     pub colour: Option<Color>
 }
 
-#[derive(Deserialize, Clone)]
-pub struct MameCommand {
+#[derive(Deserialize, Clone, PartialEq)]
+pub struct ExecCommand {
     pub cmd: String,
+    pub env: Option<HashMap<String, String>>,
     pub args: Option<Vec<String>>
 }
 

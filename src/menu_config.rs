@@ -20,7 +20,7 @@ use anyhow::Result;
 use serde::Deserialize;
 use std::{collections::HashMap, fs, path::{Path, PathBuf}};
 
-use crate::{lemon_launcher::ConfigError, rom_library::Rom};
+use crate::{lemon_config::ExecCommand, lemon_launcher::ConfigError, rom_library::Rom};
 
 #[derive(Deserialize)]
 pub struct MenuConfig {
@@ -82,10 +82,7 @@ pub enum MenuEntryAction {
         menu: String
     },
     /// Execute shell command
-    Exec {
-        exec: String,
-        args: Option<Vec<String>>
-    },
+    Exec(ExecCommand),
     /// Launch rom using mame
     Rom {
         /// Rom name with file extension (e.g. sf2)
