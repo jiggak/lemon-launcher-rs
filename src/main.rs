@@ -101,15 +101,14 @@ fn new_renderer<'ttf>(
         .opengl()
         .build()?;
 
+    sdl_context.mouse().show_cursor(false);
+
     Renderer::new(font, window, &ui_size)
 }
 
 fn main_loop(config: &LemonConfig, mut app: impl LemonScreen) -> Result<()> {
     let sdl = sdl2::init()
         .map_err(|e| Error::msg(e))?;
-
-    sdl.mouse()
-        .show_cursor(false);
 
     sdl2::image::init(sdl2::image::InitFlag::PNG | sdl2::image::InitFlag::JPG)
         .map_err(|e| Error::msg(e))?;
