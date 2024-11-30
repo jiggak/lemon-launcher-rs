@@ -54,22 +54,27 @@ pub fn scan(mame_xml: &Path, genre_ini: &Path, roms_dir: &Path) -> Result<()> {
     let mut roms = vec![];
 
     for dir_entry in fs::read_dir(roms_dir)? {
-        let dir_entry = dir_entry?;
+        let dir_entry = dir_entry?.path();
 
-        // let rom_file_name = dir_entry.file_name();
+        let rom_file_name = dir_entry.file_name()
+            .ok_or(Error::msg("Rom dir entry must be file"))?
+            .to_string_lossy();
 
-        let dir_entry_path = dir_entry.path();
-        let dir_entry_path = dir_entry_path.with_extension("");
-        let rom_name = dir_entry_path
+        let rom_name = dir_entry
+            .with_extension("")
             .file_name()
             .ok_or(Error::msg("Rom dir entry must be file"))?
             .to_string_lossy()
             .to_string();
 
-        if let Some(rom) = rom_meta.get(&rom_name) {
-            roms.push(rom);
+        if rom_file_name.ends_with(".zip") {
+            if let Some(rom) = rom_meta.get(&rom_name) {
+                roms.push(rom);
+            } else {
+                println!("Rom meta data not found {rom_name}");
+            }
         } else {
-            println!("Rom meta data not found {rom_name}");
+            println!("Not a zip file {:?}", rom_file_name);
         }
     }
 
