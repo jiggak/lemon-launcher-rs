@@ -113,7 +113,7 @@ impl LemonLauncher {
         let line_height = self.config.menu.line_height;
         let justify = &self.config.menu.justify;
         let text_color = self.config.menu.text_color;
-        let focus_color = self.config.menu.focus_color;
+        let focus_color = self.config.menu.get_focus_color();
 
         let rows = region.height() / line_height;
         let top_rows = self.config.menu.focus_offset;
@@ -128,7 +128,7 @@ impl LemonLauncher {
 
         for entry in self.menu.iter_fwd().take(bottom_rows as usize) {
             let color = match self.menu.is_selected(entry) {
-                true => focus_color,
+                true => *focus_color,
                 false => text_color
             };
 
@@ -230,8 +230,12 @@ impl LemonLauncher {
                     renderer.draw_image(&background, dest)?;
                 }
 
-                let dest = if let (Some(pos), Some(size)) = (&config.position, &config.size) {
-                    Rect::new(pos.x, pos.y, size.width, size.height)
+                let dest = if let Some(size) = &config.size {
+                    if let Some(pos) = &config.position {
+                        Rect::new(pos.x, pos.y, size.width, size.height)
+                    } else {
+                        Rect::from_center(dest.center(), size.width, size.height)
+                    }
                 } else {
                     dest
                 };

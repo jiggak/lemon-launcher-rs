@@ -89,7 +89,7 @@ pub struct LemonMenuConfig {
     pub size: Size,
     pub justify: Justify,
     pub text_color: Color,
-    pub focus_color: Color
+    focus_color: Option<Color>
 }
 
 impl LemonMenuConfig {
@@ -99,6 +99,10 @@ impl LemonMenuConfig {
 
     pub fn get_row_count(&self) -> i32 {
         self.size.height as i32 / self.line_height as i32
+    }
+
+    pub fn get_focus_color(&self) -> &Color {
+        self.focus_color.as_ref().unwrap_or(&self.text_color)
     }
 }
 
